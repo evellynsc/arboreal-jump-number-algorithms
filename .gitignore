@@ -1,0 +1,6 @@
+*.dot
+*.mps
+*.lp
+.cache
+.vscode
+build/

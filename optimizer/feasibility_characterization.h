@@ -43,6 +43,7 @@ class FeasibilityCharacterization : public Optimizer {
     int get_num_jumps();
     int idx_ns(int, int);
     void set_num_jumps(int);
+    void run();
 
     ~FeasibilityCharacterization() = default;
 };

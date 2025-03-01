@@ -91,9 +91,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "[ERRO] Não foi possível instanciar o otimizador "
                   << ALGO_ID.enum_to_str[algorithm] << std::endl;
         return 1;
-    } else if (algorithm == FEASIBILITY) {
-        ((optimizer::FeasibilityCharacterization*)optimizer)
-            ->set_num_jumps(config["algo"]["options"]["num_jumps"]);
     }
     optimizer->run();
     return 0;

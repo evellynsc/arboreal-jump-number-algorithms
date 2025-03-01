@@ -52,12 +52,13 @@ struct SolverParameters {
 class Optimizer {
    protected:
     bool relaxed;
+    bool solved;
     AlgorithmType type;
     IloEnv env;
     IloModel cplex_model;
     IloCplex cplex_solver;
     ajns::Instance instance;
-    Solution solution;
+    Solution* solution;
     IloAlgorithm::Status status;
     SolverParameters parameters;
 

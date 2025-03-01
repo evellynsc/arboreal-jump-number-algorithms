@@ -21,6 +21,7 @@ Optimizer::Optimizer() {
     this->env = IloEnv();
     this->cplex_model = IloModel(this->env);
     this->cplex_solver = IloCplex(this->env);
+    this->solution = NULL;
 }
 
 Optimizer::Optimizer(ajns::Instance& _instance, AlgorithmType _type,
@@ -82,10 +83,10 @@ void Optimizer::run() {
     std::cout << "[INFO] Resolvendo o modelo" << std::endl;
     double start, finish;
     start = this->cplex_solver.getTime();
-    auto solved = cplex_solver.solve();
+    this->solved = cplex_solver.solve();
     finish = this->cplex_solver.getTime();
     std::cout << "[INFO] Tempo de solução: " << finish - start << endl;
-    if (solved) {
+    if (this->solved) {
         std::cout << "[INFO] Solução encontrada" << std::endl;
         std::cout << "[INFO] Status da solução: "
                   << this->cplex_solver.getStatus() << std::endl;
@@ -94,7 +95,7 @@ void Optimizer::run() {
         std::cout << "[INFO] Extraindo solução do modelo" << std::endl;
         extract_solution();
         std::cout << "[INFO] Salvando solução" << std::endl;
-        this->solution.save_to_file(this->instance.id, "dot");
+        this->solution->save_to_file(this->instance.id, "dot");
         std::cout << "[INFO] Solução salva com sucesso" << std::endl;
     } else {
         std::cerr << "[ERRO] O solver não encontrou uma solução para a "

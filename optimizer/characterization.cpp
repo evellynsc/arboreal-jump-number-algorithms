@@ -471,7 +471,7 @@ void Characterization::extract_solution() {
                 try {
                     if (cplex_solver.getValue(a[idx_ij][t]) > 1e-6) {
                         std::cout << "(" << i << ", " << j << ")" << std::endl;
-                        solution.add_edge(idx_ij, i, j, false);
+                        solution->add_edge(idx_ij, i, j, false);
                     }
                 } catch (IloAlgorithm::NotExtractedException e) {
                     continue;
@@ -500,7 +500,7 @@ void Characterization::extract_solution() {
                 if (cplex_solver.getValue(f[idx_it]) > 1e-6 and 
                 (long unsigned int) i != this->instance.root) {
                     std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
-                    solution.add_edge(idx_it, i, r_map[t], true);
+                    solution->add_edge(idx_it, i, r_map[t], true);
                 }
             } catch (IloAlgorithm::NotExtractedException e) {
                 continue;

@@ -466,4 +466,15 @@ void FeasibilityCharacterization::extract_solution() {
 
 int FeasibilityCharacterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }
 
+
+void FeasibilityCharacterization::run() {
+    for (int attempt = 0; attempt < this->instance.num_vertices; attempt++) {
+        this->set_num_jumps(attempt);
+        std::cout << "[INFO] Tentativa " << attempt << std::endl;
+        Optimizer::run();
+        if (this->solved)
+            break;
+    }
+}
+
 }  // namespace optimizer

@@ -1,4 +1,4 @@
-#include "characterization.h"
+#include "feasibility_characterization.h"
 
 #include <cmath>
 
@@ -8,32 +8,32 @@
 
 namespace optimizer {
 
-Characterization::Characterization(ajns::Instance& _instance, bool _relaxed)
+FeasibilityCharacterization::FeasibilityCharacterization(ajns::Instance& _instance, bool _relaxed)
     : Optimizer(_instance, CHARACTERIZATION, _relaxed) {}
 
-Characterization::Characterization(ajns::Instance& _instance, bool _relaxed,
+FeasibilityCharacterization::FeasibilityCharacterization(ajns::Instance& _instance, bool _relaxed,
                                    int _num_jumps)
     : Optimizer(_instance, CHARACTERIZATION, _relaxed) {
     this->num_jumps = _num_jumps;
 }
 
-void Characterization::set_num_jumps(int _num_jumps) {
+void FeasibilityCharacterization::set_num_jumps(int _num_jumps) {
     this->num_jumps = _num_jumps;
 }
 
-IloNumVarArray Characterization::get_x_variables() { return x; }
+IloNumVarArray FeasibilityCharacterization::get_x_variables() { return x; }
 
-IloArray<IloNumVarArray> Characterization::get_a_variables() { return a; }
+IloArray<IloNumVarArray> FeasibilityCharacterization::get_a_variables() { return a; }
 
-IloNumVarArray Characterization::get_r_variables() { return r; }
+IloNumVarArray FeasibilityCharacterization::get_r_variables() { return r; }
 
-int Characterization::get_num_jumps() { return this->num_jumps; }
+int FeasibilityCharacterization::get_num_jumps() { return this->num_jumps; }
 
-IloNumVarArray Characterization::get_f_variables() { return f; }
+IloNumVarArray FeasibilityCharacterization::get_f_variables() { return f; }
 
-IloNumVarArray Characterization::get_g_variables() { return g; }
+IloNumVarArray FeasibilityCharacterization::get_g_variables() { return g; }
 
-void Characterization::add_variables() {
+void FeasibilityCharacterization::add_variables() {
     auto m = this->instance.num_vertices * this->instance.num_vertices;
 
     auto s1 = this->num_jumps + 1u;
@@ -161,7 +161,7 @@ void Characterization::add_variables() {
     }
 }
 
-void Characterization::add_constraints() {
+void FeasibilityCharacterization::add_constraints() {
     // sum_{t \in {0..num_jumps}} x_{i,t} = 1 \forall i \in V (1)
     for (int i = 0; i < this->instance.num_vertices; i++) {
         IloExpr sum_x(env);
@@ -456,14 +456,14 @@ void Characterization::add_constraints() {
     // }
 }
 
-void Characterization::add_objective_function() {
+void FeasibilityCharacterization::add_objective_function() {
     // this->cplex_model.add(IloMinimize(env, 0));
 }
 
-void Characterization::extract_solution() {
+void FeasibilityCharacterization::extract_solution() {
     // this->cplex_model.add(IloMinimize(env, 0));
 }
 
-int Characterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }
+int FeasibilityCharacterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }
 
 }  // namespace optimizer

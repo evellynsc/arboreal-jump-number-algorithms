@@ -3,7 +3,7 @@
 //
 #include "optimizer_creator.h"
 
-#include "optimizer/characterization.h"
+#include "optimizer/feasibility_characterization.h"
 #include "optimizer/exponential.h"
 #include "optimizer/iterative.h"
 #include "optimizer/multiflow.h"
@@ -32,7 +32,7 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
             optimizer_obj = new Iterative(_instance, _relaxed, _parameters);
             break;
         case CHARACTERIZATION:
-            optimizer_obj = new Characterization(_instance, _relaxed);
+            optimizer_obj = new FeasibilityCharacterization(_instance, _relaxed);
             break;
         default:
             std::cerr << "[ERRO] Não é possível instanciar o otimizador "

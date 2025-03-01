@@ -7,7 +7,7 @@
 // 372cf4ab-9601-480c-92be-14272b10e1bb gurobi
 //============================================================================
 
-#include "optimizer/characterization.h"
+#include "optimizer/feasibility_characterization.h"
 #define _HAS_STD_BYTE 0
 
 #include <cstdlib>
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
                   << ALGO_ID.enum_to_str[algorithm] << std::endl;
         return 1;
     } else if (algorithm == CHARACTERIZATION) {
-        ((optimizer::Characterization*)optimizer)
+        ((optimizer::FeasibilityCharacterization*)optimizer)
             ->set_num_jumps(config["algo"]["options"]["num_jumps"]);
     }
     optimizer->run();

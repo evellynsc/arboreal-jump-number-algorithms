@@ -1,5 +1,5 @@
-#ifndef OPTIMIZER_CHARACTERIZATION_H_
-#define OPTIMIZER_CHARACTERIZATION_H_
+#ifndef OPTIMIZER_FEASIBILITY_CHARACTERIZATION_H_
+#define OPTIMIZER_FEASIBILITY_CHARACTERIZATION_H_
 
 #include <ilcplex/ilocplex.h>
 
@@ -10,7 +10,7 @@ ILOSTLBEGIN
 
 namespace optimizer {
 
-class Characterization : public Optimizer {
+class FeasibilityCharacterization : public Optimizer {
     void add_variables();
     void add_objective_function();
     void add_constraints();
@@ -32,8 +32,8 @@ class Characterization : public Optimizer {
     int num_jumps;
 
    public:
-    Characterization(ajns::Instance&, bool);
-    Characterization(ajns::Instance&, bool, int);
+    FeasibilityCharacterization(ajns::Instance&, bool);
+    FeasibilityCharacterization(ajns::Instance&, bool, int);
     /*     IloNumVarArray get_v_variables();*/
     IloNumVarArray get_x_variables();
     IloNumVarArray get_r_variables();
@@ -44,7 +44,7 @@ class Characterization : public Optimizer {
     int idx_ns(int, int);
     void set_num_jumps(int);
 
-    ~Characterization() = default;
+    ~FeasibilityCharacterization() = default;
 };
 }  // namespace optimizer
 #endif /* OPTIMIZER_CHARACTERIZATION_H_ */

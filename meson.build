@@ -1,4 +1,4 @@
-project('ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release'])
+project('ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release', 'optimization=3'])
 
 # Defina os diretórios de include
 inc_dirs = include_directories([
@@ -16,7 +16,7 @@ src_files = [
   'base/instance.h',
   'base/solution.cpp',
   'heuristic/minimal_extension.cpp',
-  'optimizer/characterization.cpp',
+  'optimizer/feasibility_characterization.cpp',
   'optimizer/exponential.cpp',
   'optimizer/optimizer.cpp',
   'optimizer/multiflow.cpp',
@@ -34,7 +34,7 @@ cpp = meson.get_compiler('cpp')
 ilocplex = cpp.find_library('ilocplex', dirs: ['/home/evellyn/cplex2211/cplex/lib/x86-64_linux/static_pic'])
 concert = cpp.find_library('concert', dirs: ['/home/evellyn/cplex2211/concert/lib/x86-64_linux/static_pic'])
 cplex = cpp.find_library('cplex', dirs: ['/home/evellyn/cplex2211/cplex/lib/x86-64_linux/static_pic'])
-# boost = cpp.find_library('boost', dirs: ['/home/evellyn/boost_1_83_0'])
+
 
 # Crie o executável
 executable('ajns', src_files,
@@ -73,3 +73,4 @@ executable('ajns', src_files,
 #            '-L/home/evellyn/cplex_22/concert/lib/x86-64_linux/static_pic', '-lilocplex',
 #            '-lconcert', '-lcplex', '-m64']
 #            )
+# boost = cpp.find_library('boost', dirs: ['/home/evellyn/boost_1_83_0'])

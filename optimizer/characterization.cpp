@@ -195,7 +195,7 @@ void Characterization::add_constraints() {
             cplex_model.add(x[idx_it] >= a[idx_m][t]);
             cplex_model.add(x[idx_jt] >= a[idx_m][t]);
             cplex_model.add(a[idx_m][t] - x[idx_jt] - x[idx_it] >= -1);
-
+// =============== ENTENDER O QUE É ESSA PARTE ========================
             IloExpr sum_x(env);
             auto added = false;
 
@@ -208,6 +208,7 @@ void Characterization::add_constraints() {
                 sum_x += x[idx_jt];
                 cplex_model.add(sum_x <= 1);
             }
+// =============== ENTENDER O QUE É ESSA PARTE ========================
         }
     }
 
@@ -459,11 +460,54 @@ void Characterization::add_objective_function() {
             number_of_parts += r[idx_it];
         }
     }
-    this->cplex_model.add(IloMinimize(this->env, number_of_parts, "number_of_parts"));
+    this->cplex_model.add(IloMinimize(this->env, number_of_parts - 1, "number_of_parts"));
 }
 
 void Characterization::extract_solution() {
-    // this->cplex_model.add(IloMinimize(env, 0));
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int j = 0; j < this->instance.num_vertices; j++) {
+            for (int t = 0; t <= this->num_jumps; t++) {
+                auto idx_ij = index_parser_m[i][j];
+                try {
+                    if (cplex_solver.getValue(a[idx_ij][t]) > 1e-6) {
+                        std::cout << "(" << i << ", " << j << ")" << std::endl;
+                        solution.add_edge(idx_ij, i, j, false);
+                    }
+                } catch (IloAlgorithm::NotExtractedException e) {
+                    continue;
+                }
+            }
+        }
+    }
+    std::map<int, int> r_map;
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int t = 0; t <= this->num_jumps; t++) {
+            auto idx_it = index_parser_ns[i][t];
+            try {
+                if (cplex_solver.getValue(r[idx_it]) > 1e-6) {
+                    r_map[t] = i;
+                }
+            } catch (IloAlgorithm::NotExtractedException e) {     
+                continue;
+            }
+        }  
+    }
+
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int t = 0; t <= this->num_jumps; t++) {
+            auto idx_it = index_parser_ns[i][t];
+            try {
+                if (cplex_solver.getValue(f[idx_it]) > 1e-6 and 
+                (long unsigned int) i != this->instance.root) {
+                    std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
+                    solution.add_edge(idx_it, i, r_map[t], true);
+                }
+            } catch (IloAlgorithm::NotExtractedException e) {
+                continue;
+            }
+        }  
+    }
+
 }
 
 int Characterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }

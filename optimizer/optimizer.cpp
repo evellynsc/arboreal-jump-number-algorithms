@@ -60,7 +60,7 @@ void Optimizer::build_model() {
 }
 
 void Optimizer::save_model() {
-    auto model_file_name = this->instance.id + ".lp";
+    auto model_file_name = "mps/" + this->instance.id + ".mps";
     std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
               << std::endl;
     this->cplex_solver.exportModel(model_file_name.c_str());
@@ -91,7 +91,10 @@ void Optimizer::run() {
                   << this->cplex_solver.getStatus() << std::endl;
         std::cout << "[INFO] Valor da solução: "
                   << this->cplex_solver.getObjValue() << std::endl;
+        std::cout << "[INFO] Extraindo solução do modelo" << std::endl;
         extract_solution();
+        std::cout << "[INFO] Salvando solução" << std::endl;
+        this->solution.save_to_file(this->instance.id, "dot");
     } else {
         std::cerr << "[ERRO] O solver não encontrou uma solução para a "
                      "instância."

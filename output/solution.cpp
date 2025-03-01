@@ -7,78 +7,43 @@
 
 #include "solution.h"
 
-Solution::Solution() { num_jumps = -1; }
+Solution::Solution() { num_jumps = 0; }
 
-// Solution::Solution(int _njumps, int _nvertices,
-//                    std::vector<selected_arc>& _edges) {
-//     this->num_jumps = _njumps;
-//     this->arboreal_extension = construct_graph(_nvertices, _edges);
-// }
+Solution::Solution(int _njumps) { num_jumps = _njumps; }
 
-// my_graph::digraph Solution::construct_from_edges(
-//     // my_graph::digraph& input_graph, std::vector<bool>& selected_edges) {
-//     // my_graph::digraph solution_graph;
+void Solution::add_edge(int _id, int _i, int _j, bool is_jump) {
+    my_graph::digraph::vertex_descriptor source, target;
 
-//     // my_graph::vertex_itr vit, vit_end;
-//     // for (boost::tie(vit, vit_end) = boost::vertices(input_graph);
-//     //      vit != vit_end; ++vit) {
-//     //     boost::add_vertex(input_graph[*vit], solution_graph);
-//     // }
+    if (vertex_map.find(_i) == vertex_map.end()) {
+        source = boost::add_vertex(my_graph::vertex_info(std::to_string(_i), _i),
+            this->arboreal_extension);
+        this->vertex_map[_i] = source;
+    } else {
+        source = this->vertex_map[_i];
+    }
+    if (vertex_map.find(_j) == vertex_map.end()) {
+        target = boost::add_vertex(my_graph::vertex_info(std::to_string(_j), _j),
+            this->arboreal_extension);
+            this->vertex_map[_j] = target;
+    } else {
+        target = this->vertex_map[_j];
+    }
 
-//     // my_graph::edge_itr eit, eit_end;
-//     // for (boost::tie(eit, eit_end) = boost::edges(input_graph); eit !=
-//     eit_end;
-//     //      ++eit) {
-//     //     auto index_var = input_graph[*eit].id;
-//     //     if (selected_edges[index_var]) {
-//     //         auto source_node = boost::source(*eit, input_graph);
-//     //         auto target_node = boost::target(*eit, input_graph);
-//     //         boost::add_edge(source_node, target_node, input_graph[*eit],
-//     //                         solution_graph);
-//     //     }
-//     // }
+    auto etype = is_jump ? my_graph::ARTIFICIAL : my_graph::ORIGINAL;
+    boost::add_edge(source, target, my_graph::edge_info(_i, _j, etype), 
+        this->arboreal_extension);
+}
 
-//     // return solution_graph;
-// }
+void Solution::save_to_file(std::string _file_name, std::string _file_extension) {
+    auto dir = "dot/output/";
+    std::ofstream file;
+    file.open(dir + _file_name + "." + _file_extension);
+    boost::write_graphviz(file, this->arboreal_extension, 
+        boost::make_label_writer(boost::get(
+            &my_graph::vertex_info::id, this->arboreal_extension)),
+        boost::make_label_writer(boost::get(
+        &my_graph::edge_info::type, this->arboreal_extension)));
+    file.close();
+}
 
-// my_graph::digraph Solution::construct_graph(
-//     int _nvertices, std::vector<std::pair<int, int>>& _edges) {
-//     my_graph::digraph solution_graph;
-//     my_graph::vertex_itr vit, vit_end;
 
-//     auto _vinfo = std::vector<my_graph::vertex_info>(_nvertices);
-//     auto _vertices = std::vector<my_graph::vertex>(_nvertices);
-
-//     for (int i = 0; i < _nvertices; i++) {
-//         _vinfo[i] = my_graph::vertex_info("0", i);
-//         if (i == _nvertices - 1) {
-//             _vinfo[i].is_root = true;
-//         }
-//     }
-
-//     for (auto i : _vinfo) {
-//         auto v = boost::add_vertex(i, solution_graph);
-//         _vertices.push_back(v);
-//     }
-
-//     for (auto edge : _edges) {
-//         auto i = edge.first;
-//         auto j = edge.second;
-//         boost::add_edge(_vertices[i], _vertices[j], solution_graph);
-//     }
-
-//     return solution_graph;
-// }
-
-// void Solution::save_solution(std::string _filename, std::string _format) {
-//     _filename = _filename + "_solution.dot";
-//     auto _outfile = std::ofstream(_filename);
-//     boost::write_graphviz(_outfile, this->arboreal_extension,
-//                           boost::make_label_writer(boost::get(
-//                               &my_graph::vertex_info::id,
-//                               arboreal_extension)),
-//                           boost::make_label_writer(boost::get(
-//                               &my_graph::edge_info::type,
-//                               arboreal_extension)));
-//     _outfile.close();
-// }

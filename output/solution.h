@@ -11,24 +11,19 @@
 #include <boost/graph/graphviz.hpp>
 
 #include "../base/graph.h"
-
-// my_graph::digraph construct_from_edges(my_graph::digraph &input_graph,
-// std::vector<bool> &selected_edges);
-
-struct selected_arc {
-    int x;
-    int y;
-    bool artificial;
-};
+#include "../base/elementary.h"
 
 class Solution {
     int num_jumps;
     my_graph::digraph arboreal_extension;
+    std::map<int, my_graph::digraph::vertex_descriptor> vertex_map;
 
    public:
     Solution();
-    void convert_model_solution_to_graph();
+    Solution(int);
+    void add_edge(int, int, int, bool);
     virtual ~Solution() = default;
+    void save_to_file(std::string, std::string);
 };
 
 #endif /* BASE_SOLUTION_H_ */

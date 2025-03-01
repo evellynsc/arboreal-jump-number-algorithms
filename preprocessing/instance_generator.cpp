@@ -50,9 +50,10 @@ Instance instance_generator::create_instance(problem_data &data) {
 
     // auto dot = "dot -Tpdf ";
     // auto command;
+    auto dir = "dot/input/";
     std::ofstream outFile;
     auto name_file = data.id + "_order.dot";
-    outFile.open(name_file);
+    outFile.open(dir + name_file);
     boost::write_graphviz(outFile, order_graph,
                           boost::make_label_writer(boost::get(
                               &my_graph::vertex_info::id, order_graph)),
@@ -62,7 +63,7 @@ Instance instance_generator::create_instance(problem_data &data) {
     // command = dot + name_file + " -o " + data.id + "_order.pdf";
     //	std::system(command.c_str());
     name_file = data.id + "_covering.dot";
-    outFile.open(name_file);
+    outFile.open(dir + name_file);
     boost::write_graphviz(outFile, covering_graph,
                           boost::make_label_writer(boost::get(
                               &my_graph::vertex_info::id, covering_graph)),
@@ -72,7 +73,7 @@ Instance instance_generator::create_instance(problem_data &data) {
     // command = dot + name_file + " -o " + data.id + "_covering.pdf";
     //	std::system(command.c_str());
     name_file = data.id + "_input.dot";
-    outFile.open(name_file);
+    outFile.open(dir + name_file);
     boost::write_graphviz(outFile, input_graph,
                           boost::make_label_writer(boost::get(
                               &my_graph::vertex_info::id, input_graph)),

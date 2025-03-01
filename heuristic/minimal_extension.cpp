@@ -411,8 +411,9 @@ void minimal_extension::run() {
     std::cout << std::endl << open_violations.size() << " ======> VIOLATORS \n";
 
     auto outFile = std::ofstream();
+    auto dir = "dot/input/";
     auto name_file = problem_instance.id + "_covering.dot";
-    outFile.open(name_file);
+    outFile.open(dir + name_file);
     boost::write_graphviz(outFile, extension,
                           boost::make_label_writer(boost::get(
                               &my_graph::vertex_info::id, extension)),

@@ -12,6 +12,7 @@ src_files = [
   'preprocessing/problem_data.h',
   'utils/const.h',
   'utils/validation.h',
+  'utils/generate_config_files.h',
   'base/graph.h',
   'base/instance.h',
   'output/solution.cpp',

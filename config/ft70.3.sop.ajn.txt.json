@@ -1,0 +1,18 @@
+{
+    "algo": {
+        "options": {
+            "relaxed": false
+        },
+        "type": "CHARACTERIZATION"
+    },
+    "infile_name": "/mnt/a/Users/evellynsc/Documents/workspace/instances/sop/ft70.3.sop.ajn.txt",
+    "outfile_name": "",
+    "solver": {
+        "name": "CPLEX",
+        "options": {
+            "memory_limit": 20000,
+            "num_threads": 4,
+            "time_limit": 18000
+        }
+    }
+}

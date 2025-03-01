@@ -95,6 +95,7 @@ void Optimizer::run() {
         extract_solution();
         std::cout << "[INFO] Salvando solução" << std::endl;
         this->solution.save_to_file(this->instance.id, "dot");
+        std::cout << "[INFO] Solução salva com sucesso" << std::endl;
     } else {
         std::cerr << "[ERRO] O solver não encontrou uma solução para a "
                      "instância."

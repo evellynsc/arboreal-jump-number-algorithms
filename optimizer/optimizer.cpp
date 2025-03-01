@@ -17,7 +17,7 @@
 namespace optimizer {
 
 Optimizer::Optimizer() {
-    std::cout << "[INFO] Criando solver" << std::endl;
+    std::cout << "[INFO] Iniciando resolvedor" << std::endl;
     this->env = IloEnv();
     this->cplex_model = IloModel(this->env);
     this->cplex_solver = IloCplex(this->env);

@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
         std::cout << "[INFO] O JSON de configuração " << argv[1] << " é válido"
                   << std::endl;
     } catch (const std::exception& e) {
-        std::cerr << "[ERRO]" << e.what();
+        std::cerr << "[ERRO] " << e.what();
         return 1;
     }
 
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "[ERRO] Não foi possível instanciar o otimizador "
                   << ALGO_ID.enum_to_str[algorithm] << std::endl;
         return 1;
-    } else if (algorithm == CHARACTERIZATION) {
+    } else if (algorithm == FEASIBILITY) {
         ((optimizer::FeasibilityCharacterization*)optimizer)
             ->set_num_jumps(config["algo"]["options"]["num_jumps"]);
     }

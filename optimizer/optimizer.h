@@ -9,7 +9,7 @@
 #define OPTIMIZER_OPTIMIZER_H_
 
 #include "base/instance.h"
-#include "base/solution.h"
+#include "output/solution.h"
 #include "ilconcert/iloalg.h"
 #include "ilcplex/ilocplexi.h"
 #include "utils/const.h"

@@ -34,9 +34,11 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
             optimizer_obj = new Iterative(_instance, _relaxed, _parameters);
             break;
         case FEASIBILITY:
+            std::cout << "[INFO] Criando formulação de viabilidade" << std::endl;
             optimizer_obj = new FeasibilityCharacterization(_instance, _relaxed);
             break;
         case CHARACTERIZATION:
+            std::cout << "[INFO] Criando formulação da caracterização" << std::endl;
             optimizer_obj = new Characterization(_instance, _relaxed);
             break;
         default:

@@ -21,6 +21,13 @@ void FeasibilityCharacterization::set_num_jumps(int _num_jumps) {
     this->num_jumps = _num_jumps;
 }
 
+void FeasibilityCharacterization::restart_model() {
+    this->env = IloEnv();
+    this->cplex_model = IloModel(this->env);
+    this->cplex_solver = IloCplex(this->env);
+    this->solution = NULL;
+}
+
 IloNumVarArray FeasibilityCharacterization::get_x_variables() { return x; }
 
 IloArray<IloNumVarArray> FeasibilityCharacterization::get_a_variables() { return a; }
@@ -204,13 +211,14 @@ void FeasibilityCharacterization::add_constraints() {
             cplex_model.add(a[idx_m][t] - x[idx_jt] - x[idx_it] >= -1);
 
             IloExpr sum_x(env);
-            auto add = false;
+            auto added = false;
 
             for (int u = t + 1; u <= this->num_jumps - 1; u++) {
                 auto idx_iu = index_parser_ns[i][u];
                 sum_x += x[idx_iu];
+                added = true;
             }
-            if (add) {
+            if (added) {
                 sum_x += x[idx_jt];
                 cplex_model.add(sum_x <= 1);
             }
@@ -461,19 +469,69 @@ void FeasibilityCharacterization::add_objective_function() {
 }
 
 void FeasibilityCharacterization::extract_solution() {
-    // this->cplex_model.add(IloMinimize(env, 0));
+    this->solution = new Solution(this->num_jumps);
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int j = 0; j < this->instance.num_vertices; j++) {
+            for (int t = 0; t <= this->num_jumps; t++) {
+                auto idx_ij = index_parser_m[i][j];
+                try {
+                    if (cplex_solver.getValue(a[idx_ij][t]) > 1e-6) {
+                        std::cout << "(" << i << ", " << j << ")" << std::endl;
+                        solution->add_edge(idx_ij, i, j, false);
+                    }
+                } catch (IloAlgorithm::NotExtractedException e) {
+                    continue;
+                }
+            }
+        }
+    }
+    std::map<int, int> r_map;
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int t = 0; t <= this->num_jumps; t++) {
+            auto idx_it = index_parser_ns[i][t];
+            try {
+                if (cplex_solver.getValue(r[idx_it]) > 1e-6) {
+                    r_map[t] = i;
+                }
+            } catch (IloAlgorithm::NotExtractedException e) {     
+                continue;
+            }
+        }  
+    }
+
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int t = 0; t <= this->num_jumps; t++) {
+            auto idx_it = index_parser_ns[i][t];
+            try {
+                if (cplex_solver.getValue(f[idx_it]) > 1e-6 and 
+                (long unsigned int) i != this->instance.root) {
+                    std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
+                    solution->add_edge(idx_it, i, r_map[t], true);
+                }
+            } catch (IloAlgorithm::NotExtractedException e) {
+                continue;
+            }
+        }  
+    }
 }
 
 int FeasibilityCharacterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }
 
 
 void FeasibilityCharacterization::run() {
-    for (int attempt = 0; attempt < this->instance.num_vertices; attempt++) {
-        this->set_num_jumps(attempt);
+    std::cout << "[INFO] Executando Feasibility::run()" << std::endl;
+    for (int attempt = 0; attempt <= this->instance.num_vertices; attempt++) {
+        std::cout << "===============================================" << std::endl;
+        this->num_jumps = attempt;
         std::cout << "[INFO] Tentativa " << attempt << std::endl;
         Optimizer::run();
-        if (this->solved)
+        // break;
+        this->restart_model();
+        if (this->solved) {
+            std::cout << "[INFO] Número de jumps: " << this->num_jumps << std::endl;
             break;
+        }
+        std::cout << "===============================================" << std::endl;
     }
 }
 

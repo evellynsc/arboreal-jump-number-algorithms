@@ -15,6 +15,7 @@ class FeasibilityCharacterization : public Optimizer {
     void add_objective_function();
     void add_constraints();
     void extract_solution();
+    void restart_model();
 
     IloNumVarArray x;
     IloNumVarArray r;
@@ -43,7 +44,7 @@ class FeasibilityCharacterization : public Optimizer {
     int get_num_jumps();
     int idx_ns(int, int);
     void set_num_jumps(int);
-    void run();
+    void run() override;
 
     ~FeasibilityCharacterization() = default;
 };

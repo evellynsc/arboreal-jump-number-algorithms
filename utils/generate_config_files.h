@@ -12,14 +12,14 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-void generate_json(const std::string& directory) {
+void generate_json(const std::string& directory, const std::string& algorithm) {
     for (const auto& entry : fs::directory_iterator(directory)) {
         if (entry.is_regular_file()) {
             std::string filename = entry.path().string();
             json j;
             j["infile_name"] = filename;
             j["algo"] = {
-                {"type", "CHARACTERIZATION"},
+                {"type", algorithm},
                 {"options", {{"relaxed", false}}}
             };
             j["solver"] = {

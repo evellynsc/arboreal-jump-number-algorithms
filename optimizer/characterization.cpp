@@ -57,9 +57,13 @@ void Characterization::add_variables() {
         }
     }
     if (this->relaxed) {
+        std::cout << "[INFO] Adicionando variáveis x" << std::endl;
         x = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+        std::cout << "[INFO] Adicionando variáveis r" << std::endl;
         r = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+        std::cout << "[INFO] Adicionando variáveis f" << std::endl;
         f = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+        std::cout << "[INFO] Adicionando variáveis g" << std::endl;
         g = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
 
         a = IloArray<IloNumVarArray>(env, m);
@@ -82,22 +86,26 @@ void Characterization::add_variables() {
         f = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
         g = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
 
+        std::cout << "[INFO] Adicionando variáveis a" << std::endl;
         a = IloArray<IloNumVarArray>(env, m);
         for (int i = 0; i < m; i++) {
             a[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
         }
 
+        std::cout << "[INFO] Adicionando variáveis h" << std::endl;
         h = IloArray<IloNumVarArray>(env, m);
         for (int i = 0; i < m; i++) {
             h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOBOOL);
         }
 
+        std::cout << "[INFO] Adicionando variáveis w" << std::endl;
         w = IloArray<IloNumVarArray>(env, ns);
         for (int i = 0; i < ns; i++) {
             w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
         }
     }
 
+    std::cout << "[INFO] Nomeando variáveis" << std::endl;
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t < s1; t++) {
@@ -154,6 +162,7 @@ void Characterization::add_variables() {
 }
 
 void Characterization::add_constraints() {
+    std::cout << "[INFO] Adicionando conjunto de restrições (1)" << std::endl;
     // sum_{t \in {0..num_jumps}} x_{i,t} = 1 \forall i \in V (1)
     for (int i = 0; i < this->instance.num_vertices; i++) {
         IloExpr sum_x(env);
@@ -164,6 +173,7 @@ void Characterization::add_constraints() {
         cplex_model.add(sum_x == 1);
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (2)" << std::endl;
     // sum_{i \in V} x_{i,t} \geq 1 \forall t \in {0..num_jumps} (não tem no
     // latex)
     for (int t = 0; t <= this->num_jumps; t++) {
@@ -175,7 +185,7 @@ void Characterization::add_constraints() {
         cplex_model.add(sum_x >= 0);
     }
 
-    
+    std::cout << "[INFO] Adicionando conjunto de restrições (3),(4),(5),(6)" << std::endl;
     // x_{i,t} - a_{i,j,t} \geq 0 \forall (i,j) \in E^', \forall t \in
     // {0..num_jumps} (2)
     // x_{j,t} - a_{i,j,t} \geq 0 \forall (i,j) \in E^',
@@ -212,6 +222,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (7)" << std::endl;
     // r_{root,0} = 1 (8)
     cplex_model.add(r[index_parser_ns[this->instance.root][0]] == 1);
 
@@ -245,6 +256,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (8)" << std::endl;
     // x_{jt} \geq r_{jt} & \forall j \in V/\{0\}, \forall t \in {0..num_jumps}
     // (6)
     for (int i = 0; i < this->instance.num_vertices; i++) {
@@ -254,6 +266,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (9)" << std::endl;
     // \sum_{t \in \pi} r_{jt} + \sum_{i \in \phi^-(j)}\sum_{t \in \pi}a_{ijt} =
     // 1 & \forall j \in V/\{0\} (7)
     for (int j = 0; j < this->instance.num_vertices; j++) {
@@ -274,6 +287,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (10)" << std::endl;
     // \sum_{t\in \pi} a_{ijt} \leq 1& \forall (i,j) \in R^- (10)
     for (int j = 0; j < this->instance.num_vertices; j++) {
         if (j != this->instance.root) {
@@ -294,6 +308,7 @@ void Characterization::add_constraints() {
     //     cplex_model.add(f[idx_it] == 0);
     // }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (10)" << std::endl;
     // \sum_{i \in V} f_{it} = 1 & \forall t > 0, t  \in {0..num_jumps} (12)
     for (int t = 1; t <= this->num_jumps; t++) {
         IloExpr sum_f(env);
@@ -304,6 +319,7 @@ void Characterization::add_constraints() {
         cplex_model.add(sum_f == 1);
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (11)" << std::endl;
     // f_{iu} \leq \sum_{t \in \pi, t < u} x_{it} & \forall u > 0, u \in
     // {0..num_jumps}, \forall i \in V (13)
     for (int u = 1; u <= this->num_jumps; u++) {
@@ -318,6 +334,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (12)" << std::endl;
     // f_{it} + r_{jt} + d_{ij} \leq 2 & \forall i,j \in V, \forall t  \in
     // {1..num_jumps} (14)
     for (int i = 0; i < this->instance.num_vertices; i++) {
@@ -332,6 +349,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (13)" << std::endl;
     // h_{ijtu} \leq f_{ju} & \forall i,j \in V, \forall u,t \in {0..num_jumps},
     // t < u (16)
     // h_{ijtu} \leq x_{jt} & \forall i,j \in V, \forall u,t \in
@@ -340,7 +358,6 @@ void Characterization::add_constraints() {
     // \forall u,t \in {0..num_jumps}, t < u (18)
     // h_{ijtu} \geq f_{ju} + x_{jt}  + g_{it} - 2 & \forall i,j \in V,
     // \forall u,t \in {0..num_jumps}, t < u (19)
-
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t <= this->num_jumps; t++) {
@@ -361,6 +378,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (14)" << std::endl;
     // g_{iu} = f_{iu} + \sum_{j \in V} \sum_{t \in {0..num_jumps}, t < u}
     // h_{ijtu} & \forall i \in V, \forall u \in {1..num_jumps} (20)
     for (int i = 0; i < this->instance.num_vertices; i++) {
@@ -380,6 +398,7 @@ void Characterization::add_constraints() {
         //}
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (15)" << std::endl;
     // w_{itu} \leq x_{it} & \forall i \in V, \forall u,t \in {0..num_jumps}, t
     // < u (22)
     // w_{itu} \leq g_{iu} & \forall i \in V, \forall u,t \in
@@ -400,6 +419,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (16)" << std::endl;
     // x_{it} + x_{ju} \leq 1 + \sum_{k \in \sigma^-[i]} w_{ktu} & \forall (i,j)
     // \in R^-, \forall t, u \in {0..num_jumps}, t < u (25)
     for (auto const e : boost::make_iterator_range(
@@ -424,6 +444,7 @@ void Characterization::add_constraints() {
         }
     }
 
+    std::cout << "[INFO] Adicionando conjunto de restrições (17)" << std::endl;
     // g_{i0} = 0 \forall i \in V
     for (int i = 0; i < this->instance.num_vertices; i++) {
         auto idx_i0 = index_parser_ns[i][0];
@@ -464,6 +485,7 @@ void Characterization::add_objective_function() {
 }
 
 void Characterization::extract_solution() {
+    this->solution = new Solution(this->cplex_solver.getObjValue());
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t <= this->num_jumps; t++) {

@@ -73,7 +73,7 @@ class Optimizer {
     Optimizer(ajns::Instance&, AlgorithmType, bool);
     Optimizer(ajns::Instance&, AlgorithmType, bool, SolverParameters&);
     virtual ~Optimizer();
-    void run();
+    virtual void run();
     IloModel get_cplex_model();
     IloEnv get_cplex_env();
     ajns::Instance get_ajnp_instance();
@@ -81,7 +81,7 @@ class Optimizer {
     Solution get_solution();
 
    private:
-    void save_model();
+    void save_model(std::string);
     void setup();
 };
 }  // namespace optimizer

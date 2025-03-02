@@ -74,20 +74,20 @@ inline void validate_json(const json& data) {
     }
 
 
-    if (data["algo"]["type"] == "FEASIBILITY") {
-        if (!data["algo"]["options"].contains("num_jumps")) {
-            throw std::runtime_error(
-                "Não foi possível encontrar a chave "
-                "'algo.options.num_parts' "
-                "no json de configuração.\n");
-        }
-        if (!data["algo"]["options"].contains("order")) {
-            throw std::runtime_error(
-                "Não foi possível encontrar a chave "
-                "'algo.options.order' "
-                "no json de configuração.\n");
-        }
-    }
+    // if (data["algo"]["type"] == "FEASIBILITY") {
+    //     if (!data["algo"]["options"].contains("num_jumps")) {
+    //         throw std::runtime_error(
+    //             "Não foi possível encontrar a chave "
+    //             "'algo.options.num_parts' "
+    //             "no json de configuração.\n");
+    //     }
+    //     if (!data["algo"]["options"].contains("order")) {
+    //         throw std::runtime_error(
+    //             "Não foi possível encontrar a chave "
+    //             "'algo.options.order' "
+    //             "no json de configuração.\n");
+    //     }
+    // }
 
     // solver configuration
     if (!data["solver"].contains("name")) {

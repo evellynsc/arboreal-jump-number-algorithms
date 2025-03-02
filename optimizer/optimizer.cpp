@@ -21,7 +21,8 @@ Optimizer::Optimizer() {
     this->env = IloEnv();
     this->cplex_model = IloModel(this->env);
     this->cplex_solver = IloCplex(this->env);
-    this->solution = NULL;
+    this->solution = nullptr;
+    this->solved = false;
 }
 
 Optimizer::Optimizer(ajns::Instance& _instance, AlgorithmType _type,
@@ -57,11 +58,11 @@ void Optimizer::build_model() {
     std::cout << "[INFO] Adicionando função objetivo" << std::endl;
     add_objective_function();
     this->cplex_solver.extract(this->cplex_model);
-    save_model();
+    save_model("lp");
 }
 
-void Optimizer::save_model() {
-    auto model_file_name = "mps/" + this->instance.id + ".mps";
+void Optimizer::save_model(std::string _format) {
+    auto model_file_name = _format + "/" + this->instance.id + "." + _format;
     std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
               << std::endl;
     this->cplex_solver.exportModel(model_file_name.c_str());
@@ -76,6 +77,7 @@ Optimizer::~Optimizer() {
 }
 
 void Optimizer::run() {
+    std::cout << "[INFO] Executando Optimizer::run()" << std::endl;
     std::cout << "[INFO] Construindo o modelo" << std::endl;
     build_model();
     std::cout << "[INFO] Configurando o resolvedor" << std::endl;
@@ -94,9 +96,11 @@ void Optimizer::run() {
                   << this->cplex_solver.getObjValue() << std::endl;
         std::cout << "[INFO] Extraindo solução do modelo" << std::endl;
         extract_solution();
-        std::cout << "[INFO] Salvando solução" << std::endl;
-        this->solution->save_to_file(this->instance.id, "dot");
-        std::cout << "[INFO] Solução salva com sucesso" << std::endl;
+        if (this->solution != nullptr){
+            std::cout << "[INFO] Salvando solução" << std::endl;
+            this->solution->save_to_file(this->instance.id, "dot");
+            std::cout << "[INFO] Solução salva com sucesso" << std::endl;
+        }
     } else {
         std::cerr << "[ERRO] O solver não encontrou uma solução para a "
                      "instância."

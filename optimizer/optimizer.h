@@ -13,6 +13,8 @@
 #include "ilconcert/iloalg.h"
 #include "ilcplex/ilocplexi.h"
 #include "utils/const.h"
+#include "output/metrics.h"
+
 ILOSTLBEGIN
 
 namespace optimizer {
@@ -61,13 +63,13 @@ class Optimizer {
     Solution* solution;
     IloAlgorithm::Status status;
     SolverParameters parameters;
+    Metrics *metrics;
 
     virtual void add_variables() = 0;
     virtual void add_objective_function() = 0;
     virtual void add_constraints() = 0;
     virtual void extract_solution() = 0;
     virtual void build_model();
-
    public:
     Optimizer();
     Optimizer(ajns::Instance&, AlgorithmType, bool);
@@ -79,10 +81,14 @@ class Optimizer {
     ajns::Instance get_ajnp_instance();
     AlgorithmType get_type();
     Solution get_solution();
+    int get_num_cuts();
+    void print_metrics();
+    void set_info(std::string, AlgorithmType);
+    void save_metrics(std::string);
 
    private:
-    void save_model(std::string);
     void setup();
+    void save_model(std::string);
 };
 }  // namespace optimizer
 

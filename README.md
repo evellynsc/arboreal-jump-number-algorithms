@@ -6,7 +6,7 @@ meson setup build
 ninja -C build
 ```
 ``` 
-./build/ajns config/teste.json
+./build/ajns 1 config/teste.json
 ```
 
 "/mnt/a/Users/evellynsc/Documents/workspace/instances/sop/s04.txt"

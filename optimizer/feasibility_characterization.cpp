@@ -71,9 +71,21 @@ void FeasibilityCharacterization::add_variables() {
             index_parser_s2[u][t] = t * s1 + u;
         }
     }
+    r = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+    // f = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+    // g = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+    h = IloArray<IloNumVarArray>(env, m);
+    for (int i = 0; i < m; i++) {
+        h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOFLOAT);
+    }
+
+    w = IloArray<IloNumVarArray>(env, ns);
+    for (int i = 0; i < ns; i++) {
+        w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
+    }
     if (this->relaxed) {
         x = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
-        r = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
+        // r = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
         f = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
         g = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
 
@@ -82,18 +94,18 @@ void FeasibilityCharacterization::add_variables() {
             a[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
         }
 
-        h = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOFLOAT);
-        }
+        // h = IloArray<IloNumVarArray>(env, m);
+        // for (int i = 0; i < m; i++) {
+        //     h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOFLOAT);
+        // }
 
-        w = IloArray<IloNumVarArray>(env, ns);
-        for (int i = 0; i < ns; i++) {
-            w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
-        }
+        // w = IloArray<IloNumVarArray>(env, ns);
+        // for (int i = 0; i < ns; i++) {
+        //     w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
+        // }
     } else {
         x = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
-        r = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
+        // r = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
         f = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
         g = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
 
@@ -102,15 +114,15 @@ void FeasibilityCharacterization::add_variables() {
             a[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
         }
 
-        h = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOBOOL);
-        }
+        // h = IloArray<IloNumVarArray>(env, m);
+        // for (int i = 0; i < m; i++) {
+        //     h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOBOOL);
+        // }
 
-        w = IloArray<IloNumVarArray>(env, ns);
-        for (int i = 0; i < ns; i++) {
-            w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
-        }
+        // w = IloArray<IloNumVarArray>(env, ns);
+        // for (int i = 0; i < ns; i++) {
+        //     w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
+        // }
     }
 
     for (int i = 0; i < this->instance.num_vertices; i++) {
@@ -465,7 +477,14 @@ void FeasibilityCharacterization::add_constraints() {
 }
 
 void FeasibilityCharacterization::add_objective_function() {
-    // this->cplex_model.add(IloMinimize(env, 0));
+    IloExpr number_of_parts(this->env);
+    for (int i = 0; i < this->instance.num_vertices; i++) {
+        for (int t = 0; t <= this->num_jumps; t++) {
+            auto idx_it = index_parser_ns[i][t];
+            number_of_parts += r[idx_it];
+        }
+    }
+    this->cplex_model.add(IloMinimize(this->env, number_of_parts, "number_of_parts"));
 }
 
 void FeasibilityCharacterization::extract_solution() {
@@ -520,7 +539,8 @@ int FeasibilityCharacterization::idx_ns(int i, int j) { return index_parser_ns[i
 
 void FeasibilityCharacterization::run() {
     std::cout << "[INFO] Executando Feasibility::run()" << std::endl;
-    for (int attempt = 0; attempt <= this->instance.num_vertices; attempt++) {
+    auto naive_lower_bound = this->instance.get_max_indegree() - 1;
+    for (int attempt = naive_lower_bound; attempt <= this->instance.num_vertices; attempt++) {
         std::cout << "===============================================" << std::endl;
         this->num_jumps = attempt;
         std::cout << "[INFO] Tentativa " << attempt << std::endl;
@@ -536,3 +556,4 @@ void FeasibilityCharacterization::run() {
 }
 
 }  // namespace optimizer
+

@@ -29,7 +29,7 @@ using json = nlohmann::json;
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         std::cerr << "[ERRO] Uso: \n\t (1) ./ajns 0 diretório algorithm \n\t"
-                  << "(2) ./ajns 1 arquivo_de_configuração"
+                  << "(2) ./ajns 1 arquivo_de_configuração\n"
                   << "Use 0 se quiser gerar arquivos de configuração e " 
                   << "1 para resolver uma instância."
                   << std::endl;
@@ -93,5 +93,9 @@ int main(int argc, char* argv[]) {
         return 1;
     } 
     optimizer->run();
+    optimizer->set_info(instance.id, algorithm);
+    optimizer->print_metrics();
+    optimizer->save_metrics("results/");
+    delete optimizer;
     return 0;
 }

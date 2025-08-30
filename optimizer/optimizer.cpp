@@ -8,6 +8,7 @@
 #include "optimizer.h"
 
 #include <ilcplex/ilocplex.h>
+#include <vector>
 
 #include <ostream>
 
@@ -23,6 +24,9 @@ Optimizer::Optimizer() {
     this->cplex_solver = IloCplex(this->env);
     this->solution = nullptr;
     this->solved = false;
+    this->metrics = new Metrics();
+    this->metrics->instance_name = this->instance.id;
+    this->metrics->algorithm_name = AlgorithmIds().enum_to_str[this->type];
 }
 
 Optimizer::Optimizer(ajns::Instance& _instance, AlgorithmType _type,
@@ -57,23 +61,51 @@ void Optimizer::build_model() {
     add_constraints();
     std::cout << "[INFO] Adicionando função objetivo" << std::endl;
     add_objective_function();
+
     this->cplex_solver.extract(this->cplex_model);
-    save_model("lp");
+    this->save_model("lp");
 }
 
 void Optimizer::save_model(std::string _format) {
-    auto model_file_name = _format + "/" + this->instance.id + "." + _format;
+    auto algo_name = AlgorithmIds().enum_to_str[this->type];
+    auto model_file_name = _format + "/" + this->instance.id + "-" + algo_name + "." + _format;
     std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
               << std::endl;
     this->cplex_solver.exportModel(model_file_name.c_str());
 }
 
 Optimizer::~Optimizer() {
-    std::cout << "[INFO] Desalocando o modelo" << std::endl;
-    // verificar se faz sentido isso aqui
-    this->env.end();
+    this->save_model("mps");
+    std::cout << "[INFO] Destruindo modelo" << std::endl;
     this->cplex_model.end();
+    std::cout << "[INFO] Destruindo ambiente" << std::endl;
+    this->env.end();
+    std::cout << "[INFO] Destruindo solução" << std::endl;
+    delete this->solution;
     std::cout << "[INFO] O modelo foi desalocado\n" << std::endl;
+}
+
+void Optimizer::print_metrics() {
+    std::cout << "\n" << this->metrics->to_string() << std::endl;
+}
+
+void Optimizer::save_metrics(std::string directory) {
+    auto metrics_file_name = directory + "metrics.csv";
+    std::ofstream metrics_file;
+    metrics_file.open(metrics_file_name, std::ios_base::app);
+    if (metrics_file.is_open()) {
+        metrics_file << this->metrics->to_string() << std::endl;
+        metrics_file.close();
+        std::cout << "[INFO] Métricas salvas em " << metrics_file_name << std::endl;
+    } else {
+        std::cerr << "[ERRO] Não foi possível abrir o arquivo de métricas "
+                  << metrics_file_name << std::endl;
+    }
+}
+
+void Optimizer::set_info(std::string instance_name, AlgorithmType type) {
+    this->metrics->instance_name = instance_name;
+    this->metrics->algorithm_name = AlgorithmIds().enum_to_str[type];
 }
 
 void Optimizer::run() {
@@ -82,18 +114,33 @@ void Optimizer::run() {
     build_model();
     std::cout << "[INFO] Configurando o resolvedor" << std::endl;
     setup();
+    this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Presolve, IloTrue);
+    this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Reduce, 3);
+    // this->cplex_solver.setParam(IloCplex::Param::MIP::Limits::Nodes, 0);
+    
+    // this->cplex_solver.presolve();
+    // exit(1);
+
     std::cout << "[INFO] Resolvendo o modelo" << std::endl;
     double start, finish;
     start = this->cplex_solver.getTime();
     this->solved = cplex_solver.solve();
     finish = this->cplex_solver.getTime();
     std::cout << "[INFO] Tempo de solução: " << finish - start << endl;
+    this->metrics->solve_time = finish - start;
     if (this->solved) {
+        this->cplex_solver.exportModel("reduced.lp");
         std::cout << "[INFO] Solução encontrada" << std::endl;
-        std::cout << "[INFO] Status da solução: "
-                  << this->cplex_solver.getStatus() << std::endl;
+        auto status = this->cplex_solver.getStatus();
+        this->metrics->num_explored_nodes = this->cplex_solver.getNnodes();
+        this->metrics->num_jumps = this->cplex_solver.getObjValue();
+        this->metrics->status = std::to_string(this->cplex_solver.getStatus());
+        this->metrics->primal_bound = this->cplex_solver.getObjValue(); // For the best feasible solution found
+        this->metrics->dual_bound = this->cplex_solver.getBestObjValue(); 
+        this->metrics->cuts_added_by_solver = this->get_num_cuts();
+        std::cout << "[INFO] Status da solução: " << status << std::endl;
         std::cout << "[INFO] Valor da solução: "
-                  << this->cplex_solver.getObjValue() << std::endl;
+                  << this->metrics->num_jumps << std::endl;
         std::cout << "[INFO] Extraindo solução do modelo" << std::endl;
         extract_solution();
         if (this->solution != nullptr){
@@ -101,9 +148,10 @@ void Optimizer::run() {
             this->solution->save_to_file(this->instance.id, "dot");
             std::cout << "[INFO] Solução salva com sucesso" << std::endl;
         }
+        std::cout << "[INFO] Número total de cortes adicionados pelo cplex: " 
+                  << this->get_num_cuts() << std::endl;
     } else {
-        std::cerr << "[ERRO] O solver não encontrou uma solução para a "
-                     "instância."
+        std::cerr << "[ERRO] O modelo é inviável."
                   << std::endl;
     }
 }
@@ -136,4 +184,34 @@ void Optimizer::setup() {
     //                       CPX_MIPEMPHASIS_FEASIBILITY);
 }
 
+int Optimizer::get_num_cuts() {
+    std::vector<IloCplex::CutType> cut_types   
+    {   IloCplex::CutType::CutCover      ,
+        IloCplex::CutType::CutGubCover   ,
+        IloCplex::CutType::CutFlowCover  ,
+        IloCplex::CutType::CutClique     ,
+        IloCplex::CutType::CutFrac       ,
+        IloCplex::CutType::CutMir        ,
+        IloCplex::CutType::CutFlowPath   ,
+        IloCplex::CutType::CutDisj       ,
+        IloCplex::CutType::CutImplBd     ,
+        IloCplex::CutType::CutZeroHalf   ,
+        IloCplex::CutType::CutMCF        ,
+        IloCplex::CutType::CutLocalCover ,
+        IloCplex::CutType::CutTighten    ,
+        IloCplex::CutType::CutObjDisj    ,
+        IloCplex::CutType::CutLiftProj   ,
+        IloCplex::CutType::CutUser       ,
+        IloCplex::CutType::CutTable      ,
+        IloCplex::CutType::CutSolnPool   ,
+        IloCplex::CutType::CutLocalImplBd,
+        IloCplex::CutType::CutBQP        ,             
+        IloCplex::CutType::CutRLT        ,             
+        IloCplex::CutType::CutBenders    };                 
+    int total_cuts = 0;
+    for (auto cut_type : cut_types) {
+        total_cuts += this->cplex_solver.getNcuts(cut_type);
+    }
+    return total_cuts;
+}
 }  // namespace optimizer

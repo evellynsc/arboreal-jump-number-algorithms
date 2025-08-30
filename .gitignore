@@ -5,3 +5,5 @@
 .vscode
 build/
 config/
+*log
+.venv/

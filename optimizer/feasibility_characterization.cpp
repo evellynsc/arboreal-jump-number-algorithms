@@ -495,7 +495,7 @@ void FeasibilityCharacterization::extract_solution() {
                 auto idx_ij = index_parser_m[i][j];
                 try {
                     if (cplex_solver.getValue(a[idx_ij][t]) > 1e-6) {
-                        std::cout << "(" << i << ", " << j << ")" << std::endl;
+                        // std::cout << "(" << i << ", " << j << ")" << std::endl;
                         solution->add_edge(idx_ij, i, j, false);
                     }
                 } catch (IloAlgorithm::NotExtractedException e) {
@@ -524,7 +524,7 @@ void FeasibilityCharacterization::extract_solution() {
             try {
                 if (cplex_solver.getValue(f[idx_it]) > 1e-6 and 
                 (long unsigned int) i != this->instance.root) {
-                    std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
+                    // std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
                     solution->add_edge(idx_it, i, r_map[t], true);
                 }
             } catch (IloAlgorithm::NotExtractedException e) {
@@ -538,21 +538,26 @@ int FeasibilityCharacterization::idx_ns(int i, int j) { return index_parser_ns[i
 
 
 void FeasibilityCharacterization::run() {
-    std::cout << "[INFO] Executando Feasibility::run()" << std::endl;
+    // std::cout << "[INFO] Executando Feasibility::run()" << std::endl;
     auto naive_lower_bound = this->instance.get_max_indegree() - 1;
+
     for (int attempt = naive_lower_bound; attempt <= this->instance.num_vertices; attempt++) {
         std::cout << "===============================================" << std::endl;
         this->num_jumps = attempt;
-        std::cout << "[INFO] Tentativa " << attempt << std::endl;
+        // std::cout << "[INFO] Tentativa " << attempt << std::endl;
         Optimizer::run();
+        this->metrics->sum_time += this->metrics->solve_time;
         // break;
-        this->restart_model();
         if (this->solved) {
-            std::cout << "[INFO] Número de jumps: " << this->num_jumps << std::endl;
+            this->metrics->num_jumps = this->num_jumps;
+            // std::cout << "[INFO] Número de jumps: " << this->num_jumps << std::endl;
             break;
         }
+        this->restart_model();
         std::cout << "===============================================" << std::endl;
     }
+
+    // std::cout << "[INFO] Tempo de solução: " << this->metrics->solve_time << endl;
 }
 
 }  // namespace optimizer

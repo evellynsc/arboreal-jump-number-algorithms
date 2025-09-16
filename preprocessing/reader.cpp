@@ -65,8 +65,8 @@ problem_data ajns::reader::read() {
     this->num_elements = size_t(std::stoi(first_line[0]));
     auto read_vertices = first_line[1];
 
-    std::cout << "[INFO] Lendo " << this->num_elements << " elementos"
-              << std::endl;
+    // std::cout << "[INFO] Lendo " << this->num_elements << " elementos"
+//              << std::endl;
 
     auto element_names = std::vector<std::string>(num_elements);
     if (read_vertices.compare("y") == 0) {
@@ -80,7 +80,7 @@ problem_data ajns::reader::read() {
         }
     }
 
-    std::cout << "[INFO] Lendo matriz de adjacência" << std::endl;
+    // std::cout << "[INFO] Lendo matriz de adjacência" << std::endl;
     auto matrix = std::vector<std::vector<bool>>(
         num_elements, std::vector<bool>(num_elements, false));
     for (auto i = 0u; i < num_elements; i++) {

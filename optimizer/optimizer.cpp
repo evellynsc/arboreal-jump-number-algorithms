@@ -14,11 +14,12 @@
 
 #include "base/instance.h"
 #include "utils/const.h"
+#include "utils/time.h"
 
 namespace optimizer {
 
 Optimizer::Optimizer() {
-    std::cout << "[INFO] Iniciando resolvedor" << std::endl;
+    // std::cout << "[INFO] Iniciando resolvedor" << std::endl;
     this->env = IloEnv();
     this->cplex_model = IloModel(this->env);
     this->cplex_solver = IloCplex(this->env);
@@ -55,11 +56,11 @@ AlgorithmType Optimizer::get_type() { return this->type; }
 IloModel Optimizer::get_cplex_model() { return (this->cplex_model); }
 
 void Optimizer::build_model() {
-    std::cout << "[INFO] Adicionando variáveis" << std::endl;
+    // std::cout << "[INFO] Adicionando variáveis" << std::endl;
     add_variables();
-    std::cout << "[INFO] Adicionando restrições" << std::endl;
+    // std::cout << "[INFO] Adicionando restrições" << std::endl;
     add_constraints();
-    std::cout << "[INFO] Adicionando função objetivo" << std::endl;
+    // std::cout << "[INFO] Adicionando função objetivo" << std::endl;
     add_objective_function();
 
     this->cplex_solver.extract(this->cplex_model);
@@ -69,20 +70,21 @@ void Optimizer::build_model() {
 void Optimizer::save_model(std::string _format) {
     auto algo_name = AlgorithmIds().enum_to_str[this->type];
     auto model_file_name = _format + "/" + this->instance.id + "-" + algo_name + "." + _format;
-    std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
-              << std::endl;
+    // std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
+            //   << std::endl;
     this->cplex_solver.exportModel(model_file_name.c_str());
 }
 
 Optimizer::~Optimizer() {
     this->save_model("mps");
-    std::cout << "[INFO] Destruindo modelo" << std::endl;
-    this->cplex_model.end();
-    std::cout << "[INFO] Destruindo ambiente" << std::endl;
+    // std::cout << "[INFO] Destruindo modelo" << std::endl;
+    // this->cplex_model.end();
+    // std::cout << "[INFO] Destruindo ambiente" << std::endl;
     this->env.end();
-    std::cout << "[INFO] Destruindo solução" << std::endl;
+    // std::cout << "[INFO] Destruindo solução" << std::endl;
     delete this->solution;
-    std::cout << "[INFO] O modelo foi desalocado\n" << std::endl;
+    delete this->metrics;
+    // std::cout << "[INFO] O modelo foi desalocado\n" << std::endl;
 }
 
 void Optimizer::print_metrics() {
@@ -96,7 +98,7 @@ void Optimizer::save_metrics(std::string directory) {
     if (metrics_file.is_open()) {
         metrics_file << this->metrics->to_string() << std::endl;
         metrics_file.close();
-        std::cout << "[INFO] Métricas salvas em " << metrics_file_name << std::endl;
+        // std::cout << "[INFO] Métricas salvas em " << metrics_file_name << std::endl;
     } else {
         std::cerr << "[ERRO] Não foi possível abrir o arquivo de métricas "
                   << metrics_file_name << std::endl;
@@ -109,28 +111,25 @@ void Optimizer::set_info(std::string instance_name, AlgorithmType type) {
 }
 
 void Optimizer::run() {
-    std::cout << "[INFO] Executando Optimizer::run()" << std::endl;
-    std::cout << "[INFO] Construindo o modelo" << std::endl;
+    Timestamp *ti = NewTimestamp(), *tf = NewTimestamp();
+    Timer *timer = GetTimer();
+    timer->Clock(ti);
     build_model();
-    std::cout << "[INFO] Configurando o resolvedor" << std::endl;
     setup();
-    this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Presolve, IloTrue);
-    this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Reduce, 3);
-    // this->cplex_solver.setParam(IloCplex::Param::MIP::Limits::Nodes, 0);
-    
-    // this->cplex_solver.presolve();
-    // exit(1);
 
-    std::cout << "[INFO] Resolvendo o modelo" << std::endl;
-    double start, finish;
-    start = this->cplex_solver.getTime();
     this->solved = cplex_solver.solve();
-    finish = this->cplex_solver.getTime();
-    std::cout << "[INFO] Tempo de solução: " << finish - start << endl;
-    this->metrics->solve_time = finish - start;
+    timer->Clock(tf);
+
+    this->metrics->solve_time = timer->ElapsedTime(ti, tf);
+
+    // std::cout << "[INFO] Tempo de solução: " << this->metrics->solve_time << endl;
+
+    delete ti;
+    delete tf;
+    DeleteTimer();
+
     if (this->solved) {
         this->cplex_solver.exportModel("reduced.lp");
-        std::cout << "[INFO] Solução encontrada" << std::endl;
         auto status = this->cplex_solver.getStatus();
         this->metrics->num_explored_nodes = this->cplex_solver.getNnodes();
         this->metrics->num_jumps = this->cplex_solver.getObjValue();
@@ -138,18 +137,15 @@ void Optimizer::run() {
         this->metrics->primal_bound = this->cplex_solver.getObjValue(); // For the best feasible solution found
         this->metrics->dual_bound = this->cplex_solver.getBestObjValue(); 
         this->metrics->cuts_added_by_solver = this->get_num_cuts();
-        std::cout << "[INFO] Status da solução: " << status << std::endl;
-        std::cout << "[INFO] Valor da solução: "
-                  << this->metrics->num_jumps << std::endl;
-        std::cout << "[INFO] Extraindo solução do modelo" << std::endl;
+
         extract_solution();
         if (this->solution != nullptr){
-            std::cout << "[INFO] Salvando solução" << std::endl;
+            // std::cout << "[INFO] Salvando solução" << std::endl;
             this->solution->save_to_file(this->instance.id, "dot");
-            std::cout << "[INFO] Solução salva com sucesso" << std::endl;
+            // std::cout << "[INFO] Solução salva com sucesso" << std::endl;
         }
-        std::cout << "[INFO] Número total de cortes adicionados pelo cplex: " 
-                  << this->get_num_cuts() << std::endl;
+        // std::cout << "[INFO] Número total de cortes adicionados pelo cplex: " 
+                //   << this->get_num_cuts() << std::endl;
     } else {
         std::cerr << "[ERRO] O modelo é inviável."
                   << std::endl;
@@ -174,12 +170,17 @@ void Optimizer::setup() {
     cplex_solver.setParam(IloCplex::Param::MIP::Strategy::Probe, 1);
     cplex_solver.setParam(IloCplex::Param::MIP::Limits::ProbeDetTime, 4000);*/
     // https://www.ibm.com/docs/en/icos/20.1.0?topic=performance-memory-emphasis-letting-optimizer-use-disk-storage
+    // this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Presolve, IloTrue);
+    // this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Reduce, 3);
     cplex_solver.setParam(IloCplex::Param::Threads,
                           this->parameters.num_threads);
     cplex_solver.setParam(IloCplex::Param::MIP::Limits::TreeMemory,
                           this->parameters.memory_tree);
     cplex_solver.setParam(IloCplex::Param::MIP::Strategy::File, 3);
-    cplex_solver.setParam(IloCplex::Param::MIP::Display, 4);
+    // cplex_solver.setOut(this->env.getNullStream());
+    std::cout << "[INFO] Definindo limite de tempo para " 
+              << this->parameters.verbosity << " segundos" << std::endl;
+    cplex_solver.setParam(IloCplex::Param::MIP::Display, this->parameters.verbosity);
     // cplex_solver.setParam(IloCplex::Param::Emphasis::MIP,
     //                       CPX_MIPEMPHASIS_FEASIBILITY);
 }

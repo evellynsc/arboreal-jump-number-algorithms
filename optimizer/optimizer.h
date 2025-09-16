@@ -24,31 +24,43 @@ struct SolverParameters {
     double memory_tree;
     int num_threads;
     bool add_initial_solution;
+    int verbosity;
 
     SolverParameters()
         : time_limit(3600),
           memory_tree(10000),
           num_threads(4),
-          add_initial_solution(false) {}
+          add_initial_solution(false),
+          verbosity(0) {}
 
     SolverParameters(double _time_limit, double _memory_tree, int _num_threads,
-                     bool _add_initial_solution)
+                     bool _add_initial_solution, int _verbosity)
         : time_limit(_time_limit),
           memory_tree(_memory_tree),
           num_threads(_num_threads),
-          add_initial_solution(_add_initial_solution) {}
+          add_initial_solution(_add_initial_solution),
+          verbosity(_verbosity) {}
 
     SolverParameters(double _time_limit, double _memory_tree, int _num_threads)
         : time_limit(_time_limit),
           memory_tree(_memory_tree),
           num_threads(_num_threads),
-          add_initial_solution(false) {}
+          add_initial_solution(false),
+          verbosity(0)  {}
+
+    SolverParameters(double _time_limit, double _memory_tree, int _num_threads, int _verbosity)
+        : time_limit(_time_limit),
+          memory_tree(_memory_tree),
+          num_threads(_num_threads),
+          add_initial_solution(false),
+          verbosity(_verbosity)  {}
 
     SolverParameters(double _time_limit, double _memory_tree)
         : time_limit(_time_limit),
           memory_tree(_memory_tree),
           num_threads(4),
-          add_initial_solution(false) {}
+          add_initial_solution(false),
+          verbosity(0)  {}
 };
 
 class Optimizer {

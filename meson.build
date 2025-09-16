@@ -13,6 +13,7 @@ src_files = [
   'utils/const.h',
   'utils/validation.h',
   'utils/generate_config_files.h',
+  'utils/time.cpp',
   'base/graph.h',
   'base/instance.cpp',
   'output/metrics.h',

@@ -151,7 +151,7 @@ void Iterative::add_constraints() {
 }
 
 void Iterative::add_variables() {
-    std::cout << "[INFO] t_max " << this->t_max << std::endl;
+    // std::cout << "[INFO] t_max " << this->t_max << std::endl;
     auto r = instance.input_graph[instance.root].id;
     auto n = this->instance.num_vertices;
     std::cout << n << " " << t_max << std::endl;
@@ -207,7 +207,7 @@ void Iterative::add_variables() {
 }
 
 void Iterative::extract_solution() {
-    std::cout << "[INFO] Construindo solução" << std::endl;
+    // std::cout << "[INFO] Construindo solução" << std::endl;
     auto n = this->instance.num_vertices;
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j < n; j++) {

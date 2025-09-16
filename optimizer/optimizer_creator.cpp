@@ -18,6 +18,7 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
                                     SolverParameters& _parameters) {
     Optimizer* optimizer_obj = nullptr;
     AlgorithmIds ALGO_ID;
+    std::cout << _type << std::endl;
     switch (_type) {
         case EXPONENTIAL:
             optimizer_obj = new Exponential(_instance, _relaxed);
@@ -26,19 +27,19 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
             // optimizer_obj = new (_instance, _relaxed);
             break;
         case MULTIFLOW:
-            std::cout << "[INFO] Criando formulação multifluxo" << std::endl;
+            // std::cout << "[INFO] Criando formulação multifluxo" << std::endl;
             optimizer_obj = new MultiFlow(_instance, _relaxed, _parameters);
             break;
         case ITERATIVE:
-            std::cout << "[INFO] Criando formulação iterativa" << std::endl;
+            // std::cout << "[INFO] Criando formulação iterativa" << std::endl;
             optimizer_obj = new Iterative(_instance, _relaxed, _parameters);
             break;
         case FEASIBILITY:
-            std::cout << "[INFO] Criando formulação de viabilidade" << std::endl;
+            // std::cout << "[INFO] Criando formulação de viabilidade" << std::endl;
             optimizer_obj = new FeasibilityCharacterization(_instance, _relaxed);
             break;
         case CHARACTERIZATION:
-            std::cout << "[INFO] Criando formulação da caracterização" << std::endl;
+            // std::cout << "[INFO] Criando formulação da caracterização" << std::endl;
             optimizer_obj = new Characterization(_instance, _relaxed);
             break;
         default:

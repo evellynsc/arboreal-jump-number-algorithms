@@ -14,22 +14,24 @@ struct Metrics {
     std::string algorithm_name; // nome do algoritmo
     std::string status;         // status da solução
     double cuts_added_by_solver;
+    double sum_time;            // tempo total gasto em todas as chamadas do resolvedor
 
 
     Metrics()
         : solve_time(0.0), num_jumps(0), instance_name(""),
           num_explored_nodes(0), num_cuts(std::map<std::string, int>()),
-          primal_bound(0.0), dual_bound(0.0), algorithm_name("") {}
+          primal_bound(0.0), dual_bound(0.0), algorithm_name(""), cuts_added_by_solver(0), sum_time(0){}
 
     std::string to_string() {
       return instance_name + ";" +
             algorithm_name + ";" +
-            std::to_string(solve_time) + ";" +
             std::to_string(num_jumps) + ";" +
             std::to_string(num_explored_nodes) + ";" +
             std::to_string(primal_bound) + ";" +
             std::to_string(dual_bound) + ";" +
             std::to_string(cuts_added_by_solver) + ";" +
+            std::to_string(solve_time) + ";" +
+            std::to_string(sum_time) + ";" +
             status;
     }
 };

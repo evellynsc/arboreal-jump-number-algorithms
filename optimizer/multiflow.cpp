@@ -44,7 +44,7 @@ void MultiFlow::add_variables() {
     // auto r = this->instance.input_graph[this->instance.root].id;
     auto n = this->instance.num_vertices;
 
-    std::cout << "[INFO] Adicionando variáveis f" << std::endl;
+    // std::cout << "[INFO] Adicionando variáveis f" << std::endl;
     this->var_f = IloNumVarArray(this->env, n * n * n);
     for (auto i = 0u; i < n; i++) {
         for (auto j = 0u; j < n; j++) {
@@ -62,7 +62,7 @@ void MultiFlow::add_variables() {
         }
     }
 
-    std::cout << "[INFO] Adicionando variáveis x" << std::endl;
+    // std::cout << "[INFO] Adicionando variáveis x" << std::endl;
     this->var_x = IloNumVarArray(this->env, n * n);
     for (auto i = 0u; i < n; i++) {
         for (auto j = 0u; j < n; j++) {
@@ -94,8 +94,8 @@ void MultiFlow::add_constraints() {
     auto r = this->instance.input_graph[this->instance.root].id;
     auto n = this->instance.num_vertices;
 
-    std::cout << "[INFO] Adicionando restrições de entrada de fluxo"
-              << std::endl;
+    // std::cout << "[INFO] Adicionando restrições de entrada de fluxo"
+            //   << std::endl;
     //	constraints #2
     for (auto v : boost::make_iterator_range(
              boost::vertices(this->instance.input_graph))) {
@@ -114,7 +114,7 @@ void MultiFlow::add_constraints() {
         }
     }
 
-    std::cout << "[INFO] Adicionando restrições de saída de fluxo" << std::endl;
+    // std::cout << "[INFO] Adicionando restrições de saída de fluxo" << std::endl;
     //	constraints #2.5
     for (auto v : boost::make_iterator_range(
              boost::vertices(this->instance.input_graph))) {
@@ -133,8 +133,8 @@ void MultiFlow::add_constraints() {
         }
     }
 
-    std::cout << "[INFO] Adicionando restrições de balanceamento de fluxo"
-              << std::endl;
+    // std::cout << "[INFO] Adicionando restrições de balanceamento de fluxo"
+            //   << std::endl;
     //	constraints #3
     for (auto v : boost::make_iterator_range(
              boost::vertices(this->instance.input_graph))) {
@@ -169,7 +169,7 @@ void MultiFlow::add_constraints() {
         }
     }
 
-    std::cout << "[INFO] Relacionando variáveis x e f" << std::endl;
+    // std::cout << "[INFO] Relacionando variáveis x e f" << std::endl;
     //	constraints #6
     for (auto e :
          boost::make_iterator_range(boost::edges(this->instance.input_graph))) {
@@ -226,8 +226,8 @@ void MultiFlow::extract_solution() {
     auto n = this->instance.num_vertices;
     double num_jumps = n - 1 - this->cplex_solver.getObjValue();
 
-    std::cout << "[INFO] Número de saltos: " << num_jumps << std::endl;
-    std::cout << "[INFO] Extraindo valores das variáveis" << std::endl;
+    // std::cout << "[INFO] Número de saltos: " << num_jumps << std::endl;
+    // std::cout << "[INFO] Extraindo valores das variáveis" << std::endl;
 
     for (auto v : boost::make_iterator_range(
              boost::vertices(this->instance.input_graph))) {
@@ -253,8 +253,8 @@ void MultiFlow::extract_solution() {
                 // std::endl;
             }
         } else {
-            std::cout << "[INFO] Variável não encontrada x[" << i << "," << j
-                      << "]" << std::endl;
+            // std::cout << "[INFO] Variável não encontrada x[" << i << "," << j
+                    //   << "]" << std::endl;
         }
     }
 
@@ -280,4 +280,9 @@ void MultiFlow::extract_solution() {
     }
 }
 
+void MultiFlow::run() {
+    Optimizer::run();
+    auto n = this->instance.num_vertices;
+    this->metrics->num_jumps = n - 1 - this->cplex_solver.getObjValue();
+}
 }  // namespace optimizer

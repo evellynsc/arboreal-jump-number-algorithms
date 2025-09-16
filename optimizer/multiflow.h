@@ -40,6 +40,7 @@ class MultiFlow : public Optimizer {
     void reset_upper_bounds(std::vector<bool>);
     IloNumVarArray get_y_variables();
     virtual ~MultiFlow() = default;
+    void run() override;
 };
 
 }  // namespace optimizer

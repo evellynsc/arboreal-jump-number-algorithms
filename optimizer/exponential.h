@@ -29,6 +29,7 @@ class Exponential : public Optimizer {
     void add_out_edges_constraints();
     void fix_arcs_value();
     void add_bidirected_constraints();
+    //TODO: implementar usercut para adicionar cortes e fazer o branch-cut
 
    public:
     Exponential(ajns::Instance&);
@@ -36,6 +37,7 @@ class Exponential : public Optimizer {
     IloBoolVarArray get_variables_x();
     auto get_variables(int);
     virtual ~Exponential() = default;
+    void run() override;
 };
 
 }  // namespace optimizer

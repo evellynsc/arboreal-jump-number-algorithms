@@ -1,0 +1,9 @@
+1. Implementar o branch and cut na nova estrutura
+2. Implementar a relaxação como o Lucas indicou. Eu lembro? Não
+    - Lucas mandou material, consultar
+4. Já dá pra colocar os experimentos do algoritmo MFLOW e FEASIBILITY 
+
+
+3. Dois experimentos: a relaxação e o MIP
+4. 
+5. CHARACTERIZATION, ITERATIVE e BRANCH-AND-CUT precisam de revisão 

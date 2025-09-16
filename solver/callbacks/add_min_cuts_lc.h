@@ -95,7 +95,7 @@ ILOLAZYCONSTRAINTCALLBACK2(add_min_cuts_lc, IloBoolVarArray, x, ajns::Instance&,
 
             if (f.get_max_flow_value() < 1) {
                 // std::cout << "FLOW LESS THAN ONE\n" << f.get_max_flow_value()
-                // << std::endl;
+                << std::endl;
                 auto min_cut = f.get_min_cut();
                 auto lhside_ineq = IloExpr(env);
                 callback::construct_lhside_of_inequality(

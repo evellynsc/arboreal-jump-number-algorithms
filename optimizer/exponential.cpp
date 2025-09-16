@@ -158,6 +158,13 @@ auto Exponential::get_variables(int which) { return this->x; }
 
 void Exponential::extract_solution() {}
 
+void Exponential::run() {
+    // adicionar a user constraint =)
+    // this->cplex_solve.use(BendersLazyCallbackBaseline(env, worker->worker_cplex(), worker->worker_obj(), static_cast<DualVariablesBaseline *>(worker->worker_vars()), master_vars, instance, combine_feas_op_cuts, solution));
+
+    Optimizer::run();
+}
+
 // ExponentialModel::~ExponentialModel() {
 ////	env.end();
 ////	cplex_model.end();

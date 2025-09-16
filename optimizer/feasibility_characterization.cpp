@@ -165,14 +165,14 @@ void FeasibilityCharacterization::add_constraints() {
     }
 
     // sum_{i} x_{i,t} >= 1 for all t
-    for (int t = 0; t <= this->num_jumps; t++) {
-        GRBLinExpr sum_x = 0;
-        for (int i = 0; i < this->instance.num_vertices; i++) {
-            auto idx = index_parser_ns[i][t];
-            sum_x += x[idx];
-        }
-        gurobi_model->addConstr(sum_x >= 1);
-    }
+    // for (int t = 0; t <= this->num_jumps; t++) {
+    //     GRBLinExpr sum_x = 0;
+    //     for (int i = 0; i < this->instance.num_vertices; i++) {
+    //         auto idx = index_parser_ns[i][t];
+    //         sum_x += x[idx];
+    //     }
+    //     gurobi_model->addConstr(sum_x >= 1);
+    // }
 
     // Constraints (2)-(5)
     for (auto const e : boost::make_iterator_range(
@@ -187,16 +187,16 @@ void FeasibilityCharacterization::add_constraints() {
             gurobi_model->addConstr(x[idx_jt] >= a[idx_m][t]);
             gurobi_model->addConstr(a[idx_m][t] - x[idx_jt] - x[idx_it] >= -1);
 
-            GRBLinExpr sum_x = 0;
-            bool added = false;
-            for (int u = t + 1; u <= this->num_jumps - 1; u++) {
-                sum_x += x[index_parser_ns[i][u]];
-                added = true;
-            }
-            if (added) {
-                sum_x += x[idx_jt];
-                gurobi_model->addConstr(sum_x <= 1);
-            }
+            // GRBLinExpr sum_x = 0;
+            // bool added = false;
+            // for (int u = t + 1; u <= this->num_jumps - 1; u++) {
+            //     sum_x += x[index_parser_ns[i][u]];
+            //     added = true;
+            // }
+            // if (added) {
+            //     sum_x += x[idx_jt];
+            //     gurobi_model->addConstr(sum_x <= 1);
+            // }
         }
     }
 
@@ -260,19 +260,19 @@ void FeasibilityCharacterization::add_constraints() {
         }
     }
 
-    // sum_{t} a_{ijt} <= 1 for j != root
-    for (int j = 0; j < this->instance.num_vertices; j++) {
-        if (j != this->instance.root) {
-            GRBLinExpr sum_a = 0;
-            for (int t = 0; t <= this->num_jumps; t++) {
-                for (int i : this->instance.covering_predecessors.at(j)) {
-                    auto idx_m = index_parser_m[i][j];
-                    sum_a += a[idx_m][t];
-                }
-            }
-            gurobi_model->addConstr(sum_a <= 1);
-        }
-    }
+    // // sum_{t} a_{ijt} <= 1 for j != root
+    // for (int j = 0; j < this->instance.num_vertices; j++) {
+    //     if (j != this->instance.root) {
+    //         GRBLinExpr sum_a = 0;
+    //         for (int t = 0; t <= this->num_jumps; t++) {
+    //             for (int i : this->instance.covering_predecessors.at(j)) {
+    //                 auto idx_m = index_parser_m[i][j];
+    //                 sum_a += a[idx_m][t];
+    //             }
+    //         }
+    //         gurobi_model->addConstr(sum_a <= 1);
+    //     }
+    // }
 
     // sum_{i} f_{it} == 1 for t > 0
     for (int t = 1; t <= this->num_jumps; t++) {

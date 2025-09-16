@@ -23,6 +23,7 @@
 #include "utils/const.h"
 #include "utils/validation.h"
 #include "utils/generate_config_files.h"
+#include "gurobi_c++.h"
 
 using json = nlohmann::json;
 
@@ -51,11 +52,7 @@ int main(int argc, char* argv[]) {
         int num_threads = std::atoi(argv[6]);
         int verbosity = std::atoi(argv[7]);
 
-        // std::cout << "[INFO] Gerando arquivos de configuração"
-        //          << std::endl;
         generate_json(directory, algorithm, time_limit, memory_limit, num_threads, verbosity);
-        // std::cout << "[INFO] Arquivos de configuração salvos com sucesso"
-        //          << std::endl;
         return 0;
     }
 
@@ -67,13 +64,13 @@ int main(int argc, char* argv[]) {
     }
 
     json config;
+    std::cout << "Lendo arquivo de configuração " << argv[2] << std::endl;
     input >> config;
+    std::cout << "Leu arquivo de configuração " << argv[2] << std::endl;
     AlgorithmIds ALGO_ID;
 
     try {
         validate_json(config);
-        // std::cout << "[INFO] O JSON de configuração " << argv[2] << " é válido"
-        //         << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "[ERRO] " << e.what();
         return 1;
@@ -82,6 +79,7 @@ int main(int argc, char* argv[]) {
     std::cout << ALGO_ID.str_to_enum[config["algo"]["type"]] << std::endl;
     
     AlgorithmType algorithm = ALGO_ID.str_to_enum[config["algo"]["type"]];
+    std::cout << "antes " << config["algo"]["options"]["relaxed"] << std::endl;
     bool relaxed = config["algo"]["options"]["relaxed"];
 
     optimizer::SolverParameters* solver_parameters =
@@ -91,8 +89,7 @@ int main(int argc, char* argv[]) {
             config["solver"]["options"]["num_threads"],
             config["solver"]["options"]["verbosity"]);
 
-    // std::cout << "[INFO] Lendo arquivo de entrada " << config["infile_name"]
-            //   << std::endl;
+    std::cout << "solver parameters " << std::endl;
     auto input_file = ajns::reader(config["infile_name"]);
     auto problem_data = input_file.read();
     auto generator = ajns::instance_generator();
@@ -109,14 +106,12 @@ int main(int argc, char* argv[]) {
         }
         optimizer->run();
         optimizer->set_info(instance.id, algorithm);
-        // optimizer->print_metrics();
         optimizer->save_metrics("results/");
-        // delete optimizer;
         
     }
-    catch (IloCplex::Exception& e)
+    catch (GRBException& e)
     {
-        std::cerr << "Error: " << e.getMessage() << std::endl;
+        std::cerr << "Gurobi Error: " << e.getMessage() << std::endl;
         return 1;
     }
     catch (const std::exception& e)

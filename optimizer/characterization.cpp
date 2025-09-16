@@ -1,8 +1,6 @@
 #include "characterization.h"
 
 #include <cmath>
-
-#include "ilconcert/iloexpression.h"
 #include "optimizer.h"
 #include "utils/const.h"
 
@@ -13,106 +11,82 @@ Characterization::Characterization(ajns::Instance& _instance, bool _relaxed)
     this->num_jumps = this->instance.num_vertices - 1;
 }
 
-IloNumVarArray Characterization::get_x_variables() { return x; }
-
-IloArray<IloNumVarArray> Characterization::get_a_variables() { return a; }
-
-IloNumVarArray Characterization::get_r_variables() { return r; }
-
+std::vector<GRBVar> Characterization::get_x_variables() { return x; }
+std::vector<std::vector<GRBVar>> Characterization::get_a_variables() { return a; }
+std::vector<GRBVar> Characterization::get_r_variables() { return r; }
 int Characterization::get_num_jumps() { return this->num_jumps; }
-
-IloNumVarArray Characterization::get_f_variables() { return f; }
-
-IloNumVarArray Characterization::get_g_variables() { return g; }
+std::vector<GRBVar> Characterization::get_f_variables() { return f; }
+std::vector<GRBVar> Characterization::get_g_variables() { return g; }
 
 void Characterization::add_variables() {
-    auto m = this->instance.num_vertices * this->instance.num_vertices;
+    int m = this->instance.num_vertices * this->instance.num_vertices;
+    int s1 = this->num_jumps + 1;
+    int ns = this->instance.num_vertices * s1;
+    int s2 = s1 * s1;
 
-    auto s1 = this->num_jumps + 1u;
-    auto ns = this->instance.num_vertices * s1;
-    auto s2 = s1 * s1;
-
-    index_parser_ns = vector<vector<int>>(this->instance.num_vertices);
-    index_parser_m = vector<vector<int>>(this->instance.num_vertices);
-    index_parser_s2 = vector<vector<int>>(s1);
+    index_parser_ns = std::vector<std::vector<int>>(this->instance.num_vertices);
+    index_parser_m = std::vector<std::vector<int>>(this->instance.num_vertices);
+    index_parser_s2 = std::vector<std::vector<int>>(s1);
 
     for (int i = 0; i < this->instance.num_vertices; i++) {
-        index_parser_m[i] = vector<int>(this->instance.num_vertices);
+        index_parser_m[i] = std::vector<int>(this->instance.num_vertices);
         for (int j = 0; j < this->instance.num_vertices; j++) {
             index_parser_m[i][j] = i * this->instance.num_vertices + j;
         }
     }
 
     for (int i = 0; i < this->instance.num_vertices; i++) {
-        index_parser_ns[i] = vector<int>(s1);
+        index_parser_ns[i] = std::vector<int>(s1);
         for (int t = 0; t <= this->num_jumps; t++) {
             index_parser_ns[i][t] = t * this->instance.num_vertices + i;
         }
     }
 
     for (int u = 0; u <= this->num_jumps; u++) {
-        index_parser_s2[u] = vector<int>(s1);
+        index_parser_s2[u] = std::vector<int>(s1);
         for (int t = 0; t <= this->num_jumps; t++) {
             index_parser_s2[u][t] = t * s1 + u;
         }
     }
-    if (this->relaxed) {
-        // std::cout << "[INFO] Adicionando variáveis x" << std::endl;
-        x = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
-        // std::cout << "[INFO] Adicionando variáveis r" << std::endl;
-        r = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
-        // std::cout << "[INFO] Adicionando variáveis f" << std::endl;
-        f = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
-        // std::cout << "[INFO] Adicionando variáveis g" << std::endl;
-        g = IloNumVarArray(env, ns, 0.0, 1.0, ILOFLOAT);
 
-        a = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            a[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
+    x.resize(ns);
+    r.resize(ns);
+    f.resize(ns);
+    g.resize(ns);
+
+    for (int idx = 0; idx < ns; idx++) {
+        x[idx] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
+        r[idx] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
+        f[idx] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
+        g[idx] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
+    }
+
+    a.resize(m, std::vector<GRBVar>(s1));
+    h.resize(m, std::vector<GRBVar>(s2));
+    w.resize(ns, std::vector<GRBVar>(s1));
+
+    for (int i = 0; i < m; i++) {
+        for (int t = 0; t < s1; t++) {
+            a[i][t] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
         }
-
-        h = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOFLOAT);
+        for (int tu = 0; tu < s2; tu++) {
+            h[i][tu] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
         }
-
-        w = IloArray<IloNumVarArray>(env, ns);
-        for (int i = 0; i < ns; i++) {
-            w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOFLOAT);
-        }
-    } else {
-        x = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
-        r = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
-        f = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
-        g = IloNumVarArray(env, ns, 0.0, 1.0, ILOBOOL);
-
-        // std::cout << "[INFO] Adicionando variáveis a" << std::endl;
-        a = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            a[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
-        }
-
-        // std::cout << "[INFO] Adicionando variáveis h" << std::endl;
-        h = IloArray<IloNumVarArray>(env, m);
-        for (int i = 0; i < m; i++) {
-            h[i] = IloNumVarArray(env, s2, 0.0, 1.0, ILOBOOL);
-        }
-
-        // std::cout << "[INFO] Adicionando variáveis w" << std::endl;
-        w = IloArray<IloNumVarArray>(env, ns);
-        for (int i = 0; i < ns; i++) {
-            w[i] = IloNumVarArray(env, s1, 0.0, 1.0, ILOBOOL);
+    }
+    for (int i = 0; i < ns; i++) {
+        for (int u = 0; u < s1; u++) {
+            w[i][u] = gurobi_model->addVar(0.0, 1.0, 0.0, this->relaxed ? GRB_CONTINUOUS : GRB_BINARY);
         }
     }
 
-    // std::cout << "[INFO] Nomeando variáveis" << std::endl;
+    // Naming variables
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t < s1; t++) {
                 std::string name = "a_" + std::to_string(i) + "_" +
                                    std::to_string(j) + "_" + std::to_string(t);
                 auto idx_ij = index_parser_m[i][j];
-                a[idx_ij][t].setName(name.c_str());
+                a[idx_ij][t].set(GRB_StringAttr_VarName, name);
             }
         }
     }
@@ -126,7 +100,7 @@ void Characterization::add_variables() {
                         "_" + std::to_string(t) + "_" + std::to_string(u);
                     auto idx_ij = index_parser_m[i][j];
                     auto idx_tu = index_parser_s2[t][u];
-                    h[idx_ij][idx_tu].setName(name.c_str());
+                    h[idx_ij][idx_tu].set(GRB_StringAttr_VarName, name);
                 }
             }
         }
@@ -137,63 +111,48 @@ void Characterization::add_variables() {
             std::string name =
                 "x_" + std::to_string(i) + "_" + std::to_string(t);
             auto idx = index_parser_ns[i][t];
-            x[idx].setName(name.c_str());
+            x[idx].set(GRB_StringAttr_VarName, name);
 
             name = "r_" + std::to_string(i) + "_" + std::to_string(t);
-            idx = index_parser_ns[i][t];
-            r[idx].setName(name.c_str());
+            r[idx].set(GRB_StringAttr_VarName, name);
 
             name = "f_" + std::to_string(i) + "_" + std::to_string(t);
-            idx = index_parser_ns[i][t];
-            f[idx].setName(name.c_str());
+            f[idx].set(GRB_StringAttr_VarName, name);
 
             name = "g_" + std::to_string(i) + "_" + std::to_string(t);
-            idx = index_parser_ns[i][t];
-            g[idx].setName(name.c_str());
+            g[idx].set(GRB_StringAttr_VarName, name);
 
             for (int u = 0; u < s1; u++) {
                 name = "w_" + std::to_string(i) + "_" + std::to_string(t) +
                        "_" + std::to_string(u);
-                idx = index_parser_ns[i][t];
-                w[idx][u].setName(name.c_str());
+                w[idx][u].set(GRB_StringAttr_VarName, name);
             }
         }
     }
 }
 
 void Characterization::add_constraints() {
-    // std::cout << "[INFO] Adicionando conjunto de restrições (1)" << std::endl;
-    // sum_{t \in {0..num_jumps}} x_{i,t} = 1 \forall i \in V (1)
+    // Constraint (1): sum_{t} x_{i,t} == 1 for all i
     for (int i = 0; i < this->instance.num_vertices; i++) {
-        IloExpr sum_x(env);
+        GRBLinExpr sum_x = 0;
         for (int t = 0; t <= this->num_jumps; t++) {
             auto idx = index_parser_ns[i][t];
             sum_x += x[idx];
         }
-        cplex_model.add(sum_x == 1);
+        gurobi_model->addConstr(sum_x == 1);
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (2)" << std::endl;
-    // sum_{i \in V} x_{i,t} \geq 1 \forall t \in {0..num_jumps} (não tem no
-    // latex)
+    // Constraint (2): sum_{i} x_{i,t} >= 0 for all t
     for (int t = 0; t <= this->num_jumps; t++) {
-        IloExpr sum_x(env);
+        GRBLinExpr sum_x = 0;
         for (int i = 0; i < this->instance.num_vertices; i++) {
             auto idx = index_parser_ns[i][t];
             sum_x += x[idx];
         }
-        cplex_model.add(sum_x >= 0);
+        gurobi_model->addConstr(sum_x >= 0);
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (3),(4),(5),(6)" << std::endl;
-    // x_{i,t} - a_{i,j,t} \geq 0 \forall (i,j) \in E^', \forall t \in
-    // {0..num_jumps} (2)
-    // x_{j,t} - a_{i,j,t} \geq 0 \forall (i,j) \in E^',
-    // \forall t \in {0..num_jumps} (3)
-    // a_{i,j,t} - x_{i,t} - x_{j,t} \geq -1
-    // \forall (i,j) \in E^', \forall t \in {0..num_jumps} (4)
-    // \sum_{u \in {0..num_jumps}, u>t} x_{iu} + x_{jt} \leq 1 & \forall (i,j)
-    // \in R^-, \forall t \in {0..num_jumps} (5)
+    // Constraints (3)-(6)
     for (auto const e : boost::make_iterator_range(
              boost::edges(this->instance.covering_graph))) {
         auto i = this->instance.covering_graph[e].source_id;
@@ -202,13 +161,12 @@ void Characterization::add_constraints() {
             auto idx_it = index_parser_ns[i][t];
             auto idx_jt = index_parser_ns[j][t];
             auto idx_m = index_parser_m[i][j];
-            cplex_model.add(x[idx_it] >= a[idx_m][t]);
-            cplex_model.add(x[idx_jt] >= a[idx_m][t]);
-            cplex_model.add(a[idx_m][t] - x[idx_jt] - x[idx_it] >= -1);
-// =============== ENTENDER O QUE É ESSA PARTE ========================
-            IloExpr sum_x(env);
-            auto added = false;
+            gurobi_model->addConstr(x[idx_it] >= a[idx_m][t]);
+            gurobi_model->addConstr(x[idx_jt] >= a[idx_m][t]);
+            gurobi_model->addConstr(a[idx_m][t] - x[idx_jt] - x[idx_it] >= -1);
 
+            GRBLinExpr sum_x = 0;
+            bool added = false;
             for (int u = t + 1; u <= this->num_jumps - 1; u++) {
                 added = true;
                 auto idx_iu = index_parser_ns[i][u];
@@ -216,32 +174,30 @@ void Characterization::add_constraints() {
             }
             if (added) {
                 sum_x += x[idx_jt];
-                cplex_model.add(sum_x <= 1);
+                gurobi_model->addConstr(sum_x <= 1);
             }
-// =============== ENTENDER O QUE É ESSA PARTE ========================
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (7)" << std::endl;
-    // r_{root,0} = 1 (8)
-    cplex_model.add(r[index_parser_ns[this->instance.root][0]] == 1);
+    // Constraint (7): r_{root,0} == 1
+    gurobi_model->addConstr(r[index_parser_ns[this->instance.root][0]] == 1);
 
-    // sum_{i \in V} r_{i, num_jumps} = 1 \forall t \in {0..num_jumps} (9)
+    // Constraint (8): sum_{i} r_{i,t} <= 1 for all t
     for (int t = 0; t <= this->num_jumps; t++) {
-        IloExpr sum_r(env);
+        GRBLinExpr sum_r = 0;
         for (int i = 0; i < this->instance.num_vertices; i++) {
             auto idx = index_parser_ns[i][t];
             sum_r += r[idx];
         }
-        cplex_model.add(sum_r <= 1);
+        gurobi_model->addConstr(sum_r <= 1);
     }
 
-    //
+    // Constraint (9)
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             if (this->instance.exist_edge_in_covering_graph(i, j)) {
                 for (int u = 0; u <= this->num_jumps; u++) {
-                    IloExpr sum_x(env);
+                    GRBLinExpr sum_x = 0;
                     bool add = false;
                     for (int t = u + 1; t <= this->num_jumps; t++) {
                         sum_x += x[index_parser_ns[i][t]];
@@ -249,30 +205,26 @@ void Characterization::add_constraints() {
                     }
                     if (add) {
                         sum_x += x[index_parser_ns[j][u]];
-                        cplex_model.add(sum_x <= 1);
+                        gurobi_model->addConstr(sum_x <= 1);
                     }
                 }
             }
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (8)" << std::endl;
-    // x_{jt} \geq r_{jt} & \forall j \in V/\{0\}, \forall t \in {0..num_jumps}
-    // (6)
+    // Constraint (10): x_{it} >= r_{it}
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int t = 0; t <= this->num_jumps; t++) {
             auto idx = index_parser_ns[i][t];
-            cplex_model.add(x[idx] >= r[idx]);
+            gurobi_model->addConstr(x[idx] >= r[idx]);
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (9)" << std::endl;
-    // \sum_{t \in \pi} r_{jt} + \sum_{i \in \phi^-(j)}\sum_{t \in \pi}a_{ijt} =
-    // 1 & \forall j \in V/\{0\} (7)
+    // Constraint (11)
     for (int j = 0; j < this->instance.num_vertices; j++) {
         if (j != this->instance.root) {
-            IloExpr sum_a(env);
-            IloExpr sum_r(env);
+            GRBLinExpr sum_a = 0;
+            GRBLinExpr sum_r = 0;
             for (int t = 0; t <= this->num_jumps; t++) {
                 if (this->instance.covering_predecessors.at(j).size() > 0) {
                     for (auto i : this->instance.covering_predecessors.at(j)) {
@@ -283,81 +235,60 @@ void Characterization::add_constraints() {
                 auto idx_jt = index_parser_ns[j][t];
                 sum_r += r[idx_jt];
             }
-            cplex_model.add(sum_r + sum_a == 1);
+            gurobi_model->addConstr(sum_r + sum_a == 1);
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (10)" << std::endl;
-    // \sum_{t\in \pi} a_{ijt} \leq 1& \forall (i,j) \in R^- (10)
+    // Constraint (12)
     for (int j = 0; j < this->instance.num_vertices; j++) {
         if (j != this->instance.root) {
-            IloExpr sum_a(env);
+            GRBLinExpr sum_a = 0;
             for (int t = 0; t <= this->num_jumps; t++) {
                 for (int i : this->instance.covering_predecessors.at(j)) {
                     auto idx_m = index_parser_m[i][j];
                     sum_a += a[idx_m][t];
                 }
             }
-            cplex_model.add(sum_a <= 1);
+            gurobi_model->addConstr(sum_a <= 1);
         }
     }
 
-    // não tem na implementação com ortools nem no pdf
-    // for (int i = 0; i < this->instance.num_vertices; i++) {
-    //     auto idx_it = index_parser_ns[i][0];
-    //     cplex_model.add(f[idx_it] == 0);
-    // }
-
-    // std::cout << "[INFO] Adicionando conjunto de restrições (10)" << std::endl;
-    // \sum_{i \in V} f_{it} = 1 & \forall t > 0, t  \in {0..num_jumps} (12)
+    // Constraint (13): sum_{i} f_{it} == 1 for t > 0
     for (int t = 1; t <= this->num_jumps; t++) {
-        IloExpr sum_f(env);
+        GRBLinExpr sum_f = 0;
         for (int i = 0; i < this->instance.num_vertices; i++) {
             auto idx_it = index_parser_ns[i][t];
             sum_f += f[idx_it];
         }
-        cplex_model.add(sum_f == 1);
+        gurobi_model->addConstr(sum_f == 1);
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (11)" << std::endl;
-    // f_{iu} \leq \sum_{t \in \pi, t < u} x_{it} & \forall u > 0, u \in
-    // {0..num_jumps}, \forall i \in V (13)
+    // Constraint (14): f_{iu} <= sum_{t < u} x_{it}
     for (int u = 1; u <= this->num_jumps; u++) {
         for (int i = 0; i < this->instance.num_vertices; i++) {
-            IloExpr sum_x(env);
+            GRBLinExpr sum_x = 0;
             for (int t = 0; t < u; t++) {
                 auto idx_it = index_parser_ns[i][t];
                 sum_x += x[idx_it];
             }
             auto idx_iu = index_parser_ns[i][u];
-            cplex_model.add(f[idx_iu] <= sum_x);
+            gurobi_model->addConstr(f[idx_iu] <= sum_x);
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (12)" << std::endl;
-    // f_{it} + r_{jt} + d_{ij} \leq 2 & \forall i,j \in V, \forall t  \in
-    // {1..num_jumps} (14)
+    // Constraint (15): f_{it} + r_{jt} + d_{ij} <= 2
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 1; t <= this->num_jumps; t++) {
                 auto idx_it = index_parser_ns[i][t];
                 auto idx_jt = index_parser_ns[j][t];
                 int d_ij = this->instance.exist_edge_in_order_graph(i, j);
-
-                cplex_model.add(f[idx_it] + r[idx_jt] + d_ij <= 2);
+                gurobi_model->addConstr(f[idx_it] + r[idx_jt] + d_ij <= 2);
             }
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (13)" << std::endl;
-    // h_{ijtu} \leq f_{ju} & \forall i,j \in V, \forall u,t \in {0..num_jumps},
-    // t < u (16)
-    // h_{ijtu} \leq x_{jt} & \forall i,j \in V, \forall u,t \in
-    // {0..num_jumps}, t < u (17)
-    // h_{ijtu} \leq g_{it} & \forall i,j \in V,
-    // \forall u,t \in {0..num_jumps}, t < u (18)
-    // h_{ijtu} \geq f_{ju} + x_{jt}  + g_{it} - 2 & \forall i,j \in V,
-    // \forall u,t \in {0..num_jumps}, t < u (19)
+    // Constraints (16)-(19)
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t <= this->num_jumps; t++) {
@@ -368,23 +299,20 @@ void Characterization::add_constraints() {
                     auto idx_jt = index_parser_ns[j][t];
                     auto idx_it = index_parser_ns[i][t];
 
-                    cplex_model.add(h[idx_ij][idx_tu] <= f[idx_ju]);
-                    cplex_model.add(h[idx_ij][idx_tu] <= x[idx_jt]);
-                    cplex_model.add(h[idx_ij][idx_tu] <= g[idx_it]);
-                    cplex_model.add(h[idx_ij][idx_tu] >=
+                    gurobi_model->addConstr(h[idx_ij][idx_tu] <= f[idx_ju]);
+                    gurobi_model->addConstr(h[idx_ij][idx_tu] <= x[idx_jt]);
+                    gurobi_model->addConstr(h[idx_ij][idx_tu] <= g[idx_it]);
+                    gurobi_model->addConstr(h[idx_ij][idx_tu] >=
                                     f[idx_ju] + x[idx_jt] + g[idx_it] - 2);
                 }
             }
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (14)" << std::endl;
-    // g_{iu} = f_{iu} + \sum_{j \in V} \sum_{t \in {0..num_jumps}, t < u}
-    // h_{ijtu} & \forall i \in V, \forall u \in {1..num_jumps} (20)
+    // Constraint (20): g_{iu} == f_{iu} + sum_{j, t < u} h_{ijtu}
     for (int i = 0; i < this->instance.num_vertices; i++) {
-        // if (i != this->instance.root) {
         for (int u = 1; u <= this->num_jumps; u++) {
-            IloExpr sum_h(env);
+            GRBLinExpr sum_h = 0;
             for (int j = 0; j < this->instance.num_vertices; j++) {
                 for (int t = 0; t < u; t++) {
                     auto idx_ij = index_parser_m[i][j];
@@ -393,35 +321,26 @@ void Characterization::add_constraints() {
                 }
             }
             auto idx_iu = index_parser_ns[i][u];
-            cplex_model.add(g[idx_iu] == f[idx_iu] + sum_h);
+            gurobi_model->addConstr(g[idx_iu] == f[idx_iu] + sum_h);
         }
-        //}
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (15)" << std::endl;
-    // w_{itu} \leq x_{it} & \forall i \in V, \forall u,t \in {0..num_jumps}, t
-    // < u (22)
-    // w_{itu} \leq g_{iu} & \forall i \in V, \forall u,t \in
-    // {0..num_jumps}, t < u (23)
-    // w_{itu} \geq x_{it} + g_{iu}  - 1 & \forall i
-    // \in V, \forall u,t \in {0..num_jumps}, t < u (24)
+    // Constraints (21)-(24)
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int t = 0; t <= this->num_jumps; t++) {
             for (int u = 0; u <= this->num_jumps; u++) {
                 if (t != u) {
                     auto idx_it = index_parser_ns[i][t];
                     auto idx_iu = index_parser_ns[i][u];
-                    cplex_model.add(w[idx_it][u] <= x[idx_it]);
-                    cplex_model.add(w[idx_it][u] <= g[idx_iu]);
-                    cplex_model.add(w[idx_it][u] >= x[idx_it] + g[idx_iu] - 1);
+                    gurobi_model->addConstr(w[idx_it][u] <= x[idx_it]);
+                    gurobi_model->addConstr(w[idx_it][u] <= g[idx_iu]);
+                    gurobi_model->addConstr(w[idx_it][u] >= x[idx_it] + g[idx_iu] - 1);
                 }
             }
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (16)" << std::endl;
-    // x_{it} + x_{ju} \leq 1 + \sum_{k \in \sigma^-[i]} w_{ktu} & \forall (i,j)
-    // \in R^-, \forall t, u \in {0..num_jumps}, t < u (25)
+    // Constraint (25)
     for (auto const e : boost::make_iterator_range(
              boost::edges(this->instance.covering_graph))) {
         auto i = this->instance.covering_graph[e].source_id;
@@ -429,7 +348,7 @@ void Characterization::add_constraints() {
         for (int t = 0; t <= this->num_jumps; t++) {
             for (int u = 0; u <= this->num_jumps; u++) {
                 if (t != u) {
-                    IloExpr sum_q(env);
+                    GRBLinExpr sum_q = 0;
                     auto idx_kt = index_parser_ns[i][t];
                     sum_q += w[idx_kt][u];
                     for (int k : this->instance.sucessors.at(i)) {
@@ -438,65 +357,38 @@ void Characterization::add_constraints() {
                     }
                     auto idx_it = index_parser_ns[i][t];
                     auto idx_ju = index_parser_ns[j][u];
-                    cplex_model.add(x[idx_it] + x[idx_ju] <= 1 + sum_q);
+                    gurobi_model->addConstr(x[idx_it] + x[idx_ju] <= 1 + sum_q);
                 }
             }
         }
     }
 
-    // std::cout << "[INFO] Adicionando conjunto de restrições (17)" << std::endl;
-    // g_{i0} = 0 \forall i \in V
+    // Constraint (26): g_{i0} == 0
     for (int i = 0; i < this->instance.num_vertices; i++) {
         auto idx_i0 = index_parser_ns[i][0];
-        cplex_model.add(g[idx_i0] == 0);
+        gurobi_model->addConstr(g[idx_i0] == 0);
     }
-    // as restrições abaixo não estão na implementação do ortools
-    // for (int i = 0; i < this->instance.num_vertices; i++) {
-    //     for (int t = 1; t <= this->num_jumps; t++) {
-    //         auto idx_it = index_parser_ns[i][t];
-    //         cplex_model.add(g[idx_it] <= 1);
-    //     }
-    // }
-
-    // for (int t = 1; t <= this->num_jumps; t++) {
-    //     IloExpr sum_x_l(env), sum_x_r(env);
-    //     for (int i = 0; i < this->instance.num_vertices; i++) {
-    //         auto idx_it = index_parser_ns[i][t];
-    //         sum_x_l += x[idx_it];
-    //     }
-
-    //     for (int i = 0; i < this->instance.num_vertices; i++) {
-    //         auto idx_it = index_parser_ns[i][t - 1];
-    //         sum_x_r += x[idx_it];
-    //     }
-    //     cplex_model.add(sum_x_l - sum_x_r <= 0);
-    // }
 }
 
 void Characterization::add_objective_function() {
-    IloExpr number_of_parts(this->env);
+    GRBLinExpr number_of_parts = 0;
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int t = 0; t <= this->num_jumps; t++) {
             auto idx_it = index_parser_ns[i][t];
             number_of_parts += r[idx_it];
         }
     }
-    this->cplex_model.add(IloMinimize(this->env, number_of_parts - 1, "number_of_parts"));
+    gurobi_model->setObjective(number_of_parts - 1, GRB_MINIMIZE);
 }
 
 void Characterization::extract_solution() {
-    this->solution = new Solution(this->cplex_solver.getObjValue());
+    this->solution = new Solution(gurobi_model->get(GRB_DoubleAttr_ObjVal));
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int j = 0; j < this->instance.num_vertices; j++) {
             for (int t = 0; t <= this->num_jumps; t++) {
                 auto idx_ij = index_parser_m[i][j];
-                try {
-                    if (cplex_solver.getValue(a[idx_ij][t]) > 1e-6) {
-                        // std::cout << "(" << i << ", " << j << ")" << std::endl;
-                        solution->add_edge(idx_ij, i, j, false);
-                    }
-                } catch (IloAlgorithm::NotExtractedException e) {
-                    continue;
+                if (a[idx_ij][t].get(GRB_DoubleAttr_X) > 1e-6) {
+                    solution->add_edge(idx_ij, i, j, false);
                 }
             }
         }
@@ -505,31 +397,20 @@ void Characterization::extract_solution() {
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int t = 0; t <= this->num_jumps; t++) {
             auto idx_it = index_parser_ns[i][t];
-            try {
-                if (cplex_solver.getValue(r[idx_it]) > 1e-6) {
-                    r_map[t] = i;
-                }
-            } catch (IloAlgorithm::NotExtractedException e) {     
-                continue;
+            if (r[idx_it].get(GRB_DoubleAttr_X) > 1e-6) {
+                r_map[t] = i;
             }
-        }  
+        }
     }
 
     for (int i = 0; i < this->instance.num_vertices; i++) {
         for (int t = 0; t <= this->num_jumps; t++) {
             auto idx_it = index_parser_ns[i][t];
-            try {
-                if (cplex_solver.getValue(f[idx_it]) > 1e-6 and 
-                (long unsigned int) i != this->instance.root) {
-                    // std::cout << "(" << i << ", " << r_map[t] << ")" << std::endl;
-                    solution->add_edge(idx_it, i, r_map[t], true);
-                }
-            } catch (IloAlgorithm::NotExtractedException e) {
-                continue;
+            if (f[idx_it].get(GRB_DoubleAttr_X) > 1e-6 && i != this->instance.root) {
+                solution->add_edge(idx_it, i, r_map[t], true);
             }
-        }  
+        }
     }
-
 }
 
 int Characterization::idx_ns(int i, int j) { return index_parser_ns[i][j]; }

@@ -10,12 +10,9 @@
 
 #include "base/instance.h"
 #include "output/solution.h"
-#include "ilconcert/iloalg.h"
-#include "ilcplex/ilocplexi.h"
 #include "utils/const.h"
 #include "output/metrics.h"
-
-ILOSTLBEGIN
+#include "gurobi_c++.h"
 
 namespace optimizer {
 
@@ -68,12 +65,10 @@ class Optimizer {
     bool relaxed;
     bool solved;
     AlgorithmType type;
-    IloEnv env;
-    IloModel cplex_model;
-    IloCplex cplex_solver;
+    GRBEnv* env;
+    GRBModel* gurobi_model;
     ajns::Instance instance;
     Solution* solution;
-    IloAlgorithm::Status status;
     SolverParameters parameters;
     Metrics *metrics;
 
@@ -88,11 +83,11 @@ class Optimizer {
     Optimizer(ajns::Instance&, AlgorithmType, bool, SolverParameters&);
     virtual ~Optimizer();
     virtual void run();
-    IloModel get_cplex_model();
-    IloEnv get_cplex_env();
+    GRBModel* get_gurobi_model();
+    GRBEnv* get_gurobi_env();
     ajns::Instance get_ajnp_instance();
     AlgorithmType get_type();
-    Solution get_solution();
+    Solution* get_solution();
     int get_num_cuts();
     void print_metrics();
     void set_info(std::string, AlgorithmType);

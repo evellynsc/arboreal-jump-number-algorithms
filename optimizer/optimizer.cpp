@@ -7,11 +7,10 @@
 
 #include "optimizer.h"
 
-#include <ilcplex/ilocplex.h>
 #include <vector>
-
 #include <ostream>
-
+#include <fstream>
+#include <iostream>
 #include "base/instance.h"
 #include "utils/const.h"
 #include "utils/time.h"
@@ -19,10 +18,8 @@
 namespace optimizer {
 
 Optimizer::Optimizer() {
-    // std::cout << "[INFO] Iniciando resolvedor" << std::endl;
-    this->env = IloEnv();
-    this->cplex_model = IloModel(this->env);
-    this->cplex_solver = IloCplex(this->env);
+    this->env = new GRBEnv();
+    this->gurobi_model = new GRBModel(*this->env);
     this->solution = nullptr;
     this->solved = false;
     this->metrics = new Metrics();
@@ -47,44 +44,33 @@ Optimizer::Optimizer(ajns::Instance& _instance, AlgorithmType _type,
     this->parameters = _parameters;
 }
 
-IloEnv Optimizer::get_cplex_env() { return this->env; }
+GRBEnv* Optimizer::get_gurobi_env() { return this->env; }
 
 ajns::Instance Optimizer::get_ajnp_instance() { return this->instance; }
 
 AlgorithmType Optimizer::get_type() { return this->type; }
 
-IloModel Optimizer::get_cplex_model() { return (this->cplex_model); }
+GRBModel* Optimizer::get_gurobi_model() { return this->gurobi_model; }
 
 void Optimizer::build_model() {
-    // std::cout << "[INFO] Adicionando variáveis" << std::endl;
     add_variables();
-    // std::cout << "[INFO] Adicionando restrições" << std::endl;
     add_constraints();
-    // std::cout << "[INFO] Adicionando função objetivo" << std::endl;
     add_objective_function();
-
-    this->cplex_solver.extract(this->cplex_model);
     this->save_model("lp");
 }
 
 void Optimizer::save_model(std::string _format) {
     auto algo_name = AlgorithmIds().enum_to_str[this->type];
     auto model_file_name = _format + "/" + this->instance.id + "-" + algo_name + "." + _format;
-    // std::cout << "[INFO] Salvando o modelo no arquivo " << model_file_name
-            //   << std::endl;
-    this->cplex_solver.exportModel(model_file_name.c_str());
+    this->gurobi_model->write(model_file_name);
 }
 
 Optimizer::~Optimizer() {
     this->save_model("mps");
-    // std::cout << "[INFO] Destruindo modelo" << std::endl;
-    // this->cplex_model.end();
-    // std::cout << "[INFO] Destruindo ambiente" << std::endl;
-    this->env.end();
-    // std::cout << "[INFO] Destruindo solução" << std::endl;
+    delete this->gurobi_model;
+    delete this->env;
     delete this->solution;
     delete this->metrics;
-    // std::cout << "[INFO] O modelo foi desalocado\n" << std::endl;
 }
 
 void Optimizer::print_metrics() {
@@ -98,7 +84,6 @@ void Optimizer::save_metrics(std::string directory) {
     if (metrics_file.is_open()) {
         metrics_file << this->metrics->to_string() << std::endl;
         metrics_file.close();
-        // std::cout << "[INFO] Métricas salvas em " << metrics_file_name << std::endl;
     } else {
         std::cerr << "[ERRO] Não foi possível abrir o arquivo de métricas "
                   << metrics_file_name << std::endl;
@@ -117,102 +102,57 @@ void Optimizer::run() {
     build_model();
     setup();
 
-    this->solved = cplex_solver.solve();
+    this->gurobi_model->set(GRB_DoubleParam_TimeLimit, this->parameters.time_limit);
+    this->gurobi_model->set(GRB_IntParam_Threads, this->parameters.num_threads);
+    this->gurobi_model->set(GRB_DoubleParam_NodefileStart, this->parameters.memory_tree);
+
+    this->gurobi_model->optimize();
     timer->Clock(tf);
 
     this->metrics->solve_time = timer->ElapsedTime(ti, tf);
 
-    // std::cout << "[INFO] Tempo de solução: " << this->metrics->solve_time << endl;
+    int status = this->gurobi_model->get(GRB_IntAttr_Status);
 
-    delete ti;
-    delete tf;
-    DeleteTimer();
-
-    if (this->solved) {
-        this->cplex_solver.exportModel("reduced.lp");
-        auto status = this->cplex_solver.getStatus();
-        this->metrics->num_explored_nodes = this->cplex_solver.getNnodes();
-        this->metrics->num_jumps = this->cplex_solver.getObjValue();
-        this->metrics->status = std::to_string(this->cplex_solver.getStatus());
-        this->metrics->primal_bound = this->cplex_solver.getObjValue(); // For the best feasible solution found
-        this->metrics->dual_bound = this->cplex_solver.getBestObjValue(); 
+    if (status == GRB_OPTIMAL || status == GRB_SUBOPTIMAL || status == GRB_TIME_LIMIT) {
+        this->solved = true;
+        this->gurobi_model->write("reduced.lp");
+        this->metrics->num_explored_nodes = static_cast<int>(this->gurobi_model->get(GRB_DoubleAttr_NodeCount));
+        this->metrics->num_jumps = this->gurobi_model->get(GRB_DoubleAttr_ObjVal);
+        this->metrics->status = std::to_string(status);
+        this->metrics->primal_bound = this->gurobi_model->get(GRB_DoubleAttr_ObjVal);
+        this->metrics->dual_bound = this->gurobi_model->get(GRB_DoubleAttr_ObjBound);
         this->metrics->cuts_added_by_solver = this->get_num_cuts();
 
         extract_solution();
         if (this->solution != nullptr){
-            // std::cout << "[INFO] Salvando solução" << std::endl;
             this->solution->save_to_file(this->instance.id, "dot");
-            // std::cout << "[INFO] Solução salva com sucesso" << std::endl;
         }
-        // std::cout << "[INFO] Número total de cortes adicionados pelo cplex: " 
-                //   << this->get_num_cuts() << std::endl;
     } else {
-        std::cerr << "[ERRO] O modelo é inviável."
-                  << std::endl;
+        this->solved = false;
+        std::cerr << "[ERRO] O modelo é inviável." << std::endl;
     }
+
+    delete ti;
+    delete tf;
+    DeleteTimer();
 }
 
 void Optimizer::setup() {
-    // https://www.ibm.com/docs/ru/icos/20.1.0?topic=parameters-mip-dynamic-search-switch
-    // cplex_solver.setParam(IloCplex::Param::Preprocessing::Presolve, CPX_ON);
-    //	cplex_solver.setParam(IloCplex::Param::MIP::Strategy::HeuristicFreq,
-    // CPX_ON);
-    // cplex_solver.setParam(IloCplex::Param::MIP::Strategy::RINSHeur, CPX_ON);
-    // cplex_solver.setParam(IloCplex::Param::MIP::Strategy::FPHeur, CPX_ON);
-    // cplex_solver.setParam(IloCplex::Param::Preprocessing::Linear, 0);
-    // //1 when running branch and cut
-    // cplex_solver.setParam(IloCplex::Param::MIP::Strategy::Search,
-    // CPX_MIPSEARCH_AUTO); //CPX_MIPSEARCH_AUTO
-    //
-    /*cplex_solver.setParam(IloCplex::Param::TimeLimit, config.time_limit);
-
-
-    cplex_solver.setParam(IloCplex::Param::MIP::Strategy::Probe, 1);
-    cplex_solver.setParam(IloCplex::Param::MIP::Limits::ProbeDetTime, 4000);*/
-    // https://www.ibm.com/docs/en/icos/20.1.0?topic=performance-memory-emphasis-letting-optimizer-use-disk-storage
-    // this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Presolve, IloTrue);
-    // this->cplex_solver.setParam(IloCplex::Param::Preprocessing::Reduce, 3);
-    cplex_solver.setParam(IloCplex::Param::Threads,
-                          this->parameters.num_threads);
-    cplex_solver.setParam(IloCplex::Param::MIP::Limits::TreeMemory,
-                          this->parameters.memory_tree);
-    cplex_solver.setParam(IloCplex::Param::MIP::Strategy::File, 3);
-    // cplex_solver.setOut(this->env.getNullStream());
-    std::cout << "[INFO] Definindo limite de tempo para " 
-              << this->parameters.verbosity << " segundos" << std::endl;
-    cplex_solver.setParam(IloCplex::Param::MIP::Display, this->parameters.verbosity);
-    // cplex_solver.setParam(IloCplex::Param::Emphasis::MIP,
-    //                       CPX_MIPEMPHASIS_FEASIBILITY);
+    this->gurobi_model->set(GRB_IntParam_Threads, this->parameters.num_threads);
+    this->gurobi_model->set(GRB_DoubleParam_NodefileStart, this->parameters.memory_tree);
+    this->gurobi_model->set(GRB_DoubleParam_TimeLimit, this->parameters.time_limit);
+    this->gurobi_model->set(GRB_IntParam_OutputFlag, this->parameters.verbosity);
+    // You can add more Gurobi parameters here if needed
 }
 
 int Optimizer::get_num_cuts() {
-    std::vector<IloCplex::CutType> cut_types   
-    {   IloCplex::CutType::CutCover      ,
-        IloCplex::CutType::CutGubCover   ,
-        IloCplex::CutType::CutFlowCover  ,
-        IloCplex::CutType::CutClique     ,
-        IloCplex::CutType::CutFrac       ,
-        IloCplex::CutType::CutMir        ,
-        IloCplex::CutType::CutFlowPath   ,
-        IloCplex::CutType::CutDisj       ,
-        IloCplex::CutType::CutImplBd     ,
-        IloCplex::CutType::CutZeroHalf   ,
-        IloCplex::CutType::CutMCF        ,
-        IloCplex::CutType::CutLocalCover ,
-        IloCplex::CutType::CutTighten    ,
-        IloCplex::CutType::CutObjDisj    ,
-        IloCplex::CutType::CutLiftProj   ,
-        IloCplex::CutType::CutUser       ,
-        IloCplex::CutType::CutTable      ,
-        IloCplex::CutType::CutSolnPool   ,
-        IloCplex::CutType::CutLocalImplBd,
-        IloCplex::CutType::CutBQP        ,             
-        IloCplex::CutType::CutRLT        ,             
-        IloCplex::CutType::CutBenders    };                 
     int total_cuts = 0;
-    for (auto cut_type : cut_types) {
-        total_cuts += this->cplex_solver.getNcuts(cut_type);
-    }
+    // try {
+    //     total_cuts += static_cast<int>(this->gurobi_model->get(GRB_DoubleAttr_CutCount));
+    // } catch (...) {
+    //     // Attribute may not be available for all models
+    // }
     return total_cuts;
 }
+
 }  // namespace optimizer

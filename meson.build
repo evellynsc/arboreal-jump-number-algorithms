@@ -1,9 +1,8 @@
-project('ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release', 'optimization=3'])
+project('grb_ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release', 'optimization=3'])
 
 # Defina os diretórios de include
 inc_dirs = include_directories([
-  '/home/evellyn/cplex2211/cplex/include',
-  '/home/evellyn/cplex2211/concert/include',
+  '/mnt/a/Users/evellynsc/Documents/gurobi1203/linux64/include',
   '/home/evellyn/boost_1_83_0'
 ])
 
@@ -35,16 +34,14 @@ src_files = [
 cpp = meson.get_compiler('cpp')
 
 # Defina as bibliotecas a serem vinculadas
-ilocplex = cpp.find_library('ilocplex', dirs: ['/home/evellyn/cplex2211/cplex/lib/x86-64_linux/static_pic'])
-concert = cpp.find_library('concert', dirs: ['/home/evellyn/cplex2211/concert/lib/x86-64_linux/static_pic'])
-cplex = cpp.find_library('cplex', dirs: ['/home/evellyn/cplex2211/cplex/lib/x86-64_linux/static_pic'])
-
+gurobi_cpp = cpp.find_library('gurobi_c++', dirs: ['/mnt/a/Users/evellynsc/Documents/gurobi1203/linux64/lib'])
+gurobi_c = cpp.find_library('gurobi120', dirs: ['/mnt/a/Users/evellynsc/Documents/gurobi1203/linux64/lib'])
 
 # Crie o executável
-executable('ajns', src_files,
+executable('grb_ajns', src_files,
   include_directories: inc_dirs,
-  dependencies: [ilocplex, concert, cplex],
-  link_args: ['-lm', '-lpthread', '-ldl']
+  dependencies: [gurobi_cpp, gurobi_c],
+  link_args: []
 )
 
 

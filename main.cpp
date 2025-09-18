@@ -64,9 +64,7 @@ int main(int argc, char* argv[]) {
     }
 
     json config;
-    std::cout << "Lendo arquivo de configuração " << argv[2] << std::endl;
     input >> config;
-    std::cout << "Leu arquivo de configuração " << argv[2] << std::endl;
     AlgorithmIds ALGO_ID;
 
     try {
@@ -94,7 +92,7 @@ int main(int argc, char* argv[]) {
     auto problem_data = input_file.read();
     auto generator = ajns::instance_generator();
     auto instance = generator.create_instance(problem_data);
-    try
+    // try
     {
         optimizer::Optimizer* optimizer = optimizer::OptimizerCreator::create(
         instance, algorithm, relaxed, *solver_parameters);
@@ -109,16 +107,16 @@ int main(int argc, char* argv[]) {
         optimizer->save_metrics("results/");
         
     }
-    catch (GRBException& e)
-    {
-        std::cerr << "Gurobi Error: " << e.getMessage() << std::endl;
-        return 1;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "[ERRO] " << e.what();
-        return 1;
-    }
+    // catch (GRBException& e)
+    // {
+    //     std::cerr << "Gurobi Error: " << e.getMessage() << std::endl;
+    //     return 1;
+    // }
+    // catch (const std::exception& e)
+    // {
+    //     std::cerr << "[ERRO] " << e.what();
+    //     return 1;
+    // }
 
     return 0;
 }

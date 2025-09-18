@@ -32,12 +32,13 @@ class FeasibilityCharacterization : public Optimizer {
 
    public:
     FeasibilityCharacterization(ajns::Instance&, bool);
-    FeasibilityCharacterization(ajns::Instance&, bool, int);
+    // FeasibilityCharacterization(ajns::Instance&, bool, int);
+    FeasibilityCharacterization(ajns::Instance&, bool, SolverParameters&);
 
     std::vector<GRBVar> get_x_variables();
     std::vector<GRBVar> get_r_variables();
     std::vector<GRBVar> get_f_variables();
-    std::vector<GRBVar> get_g_variables();
+    // std::vector<GRBVar> get_g_variables();
     std::vector<std::vector<GRBVar>> get_a_variables();
     int get_num_jumps();
     int idx_ns(int, int);

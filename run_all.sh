@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Caminho para o diretório de configuração
-INPUT_DIR=configqq/feasibility
+INPUT_DIR=config/feasibility
 
 # Caminho para o executável do programa
 PROGRAM_PATH=./build/ajns

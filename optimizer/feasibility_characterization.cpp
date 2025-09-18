@@ -9,28 +9,27 @@ namespace optimizer {
 FeasibilityCharacterization::FeasibilityCharacterization(ajns::Instance& _instance, bool _relaxed)
     : Optimizer(_instance, CHARACTERIZATION, _relaxed) {}
 
-FeasibilityCharacterization::FeasibilityCharacterization(ajns::Instance& _instance, bool _relaxed, int _num_jumps)
-    : Optimizer(_instance, CHARACTERIZATION, _relaxed) {
-    this->num_jumps = _num_jumps;
-}
+FeasibilityCharacterization::FeasibilityCharacterization(ajns::Instance& _instance, bool _relaxed, SolverParameters& _parameters)
+    : Optimizer(_instance, CHARACTERIZATION, _relaxed, _parameters) {}
 
 void FeasibilityCharacterization::set_num_jumps(int _num_jumps) {
     this->num_jumps = _num_jumps;
 }
 
 void FeasibilityCharacterization::restart_model() {
-    delete this->gurobi_model;
-    delete this->env;
-    this->env = new GRBEnv();
-    this->gurobi_model = new GRBModel(*this->env);
-    this->solution = nullptr;
     x.clear();
     r.clear();
     f.clear();
-    g.clear();
     a.clear();
+    g.clear();
     h.clear();
     w.clear();
+    if (this->gurobi_model) {
+        delete this->gurobi_model;
+    }
+    this->env = new GRBEnv();
+    this->gurobi_model = new GRBModel(*this->env);
+    this->solution = nullptr;
 }
 
 std::vector<GRBVar> FeasibilityCharacterization::get_x_variables() { return x; }
@@ -38,7 +37,7 @@ std::vector<std::vector<GRBVar>> FeasibilityCharacterization::get_a_variables() 
 std::vector<GRBVar> FeasibilityCharacterization::get_r_variables() { return r; }
 int FeasibilityCharacterization::get_num_jumps() { return this->num_jumps; }
 std::vector<GRBVar> FeasibilityCharacterization::get_f_variables() { return f; }
-std::vector<GRBVar> FeasibilityCharacterization::get_g_variables() { return g; }
+// std::vector<GRBVar> FeasibilityCharacterization::get_g_variables() { return g; }
 
 void FeasibilityCharacterization::add_variables() {
     int m = this->instance.num_vertices * this->instance.num_vertices;

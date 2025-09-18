@@ -143,14 +143,14 @@ void Characterization::add_constraints() {
     }
 
     // Constraint (2): sum_{i} x_{i,t} >= 0 for all t
-    for (int t = 0; t <= this->num_jumps; t++) {
-        GRBLinExpr sum_x = 0;
-        for (int i = 0; i < this->instance.num_vertices; i++) {
-            auto idx = index_parser_ns[i][t];
-            sum_x += x[idx];
-        }
-        gurobi_model->addConstr(sum_x >= 0);
-    }
+    // for (int t = 0; t <= this->num_jumps; t++) {
+    //     GRBLinExpr sum_x = 0;
+    //     for (int i = 0; i < this->instance.num_vertices; i++) {
+    //         auto idx = index_parser_ns[i][t];
+    //         sum_x += x[idx];
+    //     }
+    //     gurobi_model->addConstr(sum_x >= 0);
+    // }
 
     // Constraints (3)-(6)
     for (auto const e : boost::make_iterator_range(

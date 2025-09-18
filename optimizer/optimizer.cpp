@@ -53,10 +53,12 @@ AlgorithmType Optimizer::get_type() { return this->type; }
 GRBModel* Optimizer::get_gurobi_model() { return this->gurobi_model; }
 
 void Optimizer::build_model() {
+    // std::cout << "Building model..." << std::endl;
     add_variables();
     add_constraints();
     add_objective_function();
     this->save_model("lp");
+    // std::cout << "Model built!" << std::endl;
 }
 
 void Optimizer::save_model(std::string _format) {
@@ -67,8 +69,14 @@ void Optimizer::save_model(std::string _format) {
 
 Optimizer::~Optimizer() {
     this->save_model("mps");
-    delete this->gurobi_model;
-    delete this->env;
+    // delete this->gurobi_model;
+    // delete this->env;
+    // Check for nullptr before deleting to prevent double-free
+    // if a derived class (like FeasibilityCharacterization) has already cleaned up.
+    if (this->gurobi_model)
+        delete this->gurobi_model;
+    if (this->env)
+        delete this->env;
     delete this->solution;
     delete this->metrics;
 }
@@ -102,10 +110,6 @@ void Optimizer::run() {
     build_model();
     setup();
 
-    this->gurobi_model->set(GRB_DoubleParam_TimeLimit, this->parameters.time_limit);
-    this->gurobi_model->set(GRB_IntParam_Threads, this->parameters.num_threads);
-    this->gurobi_model->set(GRB_DoubleParam_NodefileStart, this->parameters.memory_tree);
-
     this->gurobi_model->optimize();
     timer->Clock(tf);
 
@@ -138,11 +142,12 @@ void Optimizer::run() {
 }
 
 void Optimizer::setup() {
+    // std::cout << "Setting up the model..." << std::endl;
     this->gurobi_model->set(GRB_IntParam_Threads, this->parameters.num_threads);
-    this->gurobi_model->set(GRB_DoubleParam_NodefileStart, this->parameters.memory_tree);
+    this->gurobi_model->set(GRB_DoubleParam_SoftMemLimit, this->parameters.memory_tree);
     this->gurobi_model->set(GRB_DoubleParam_TimeLimit, this->parameters.time_limit);
     this->gurobi_model->set(GRB_IntParam_OutputFlag, this->parameters.verbosity);
-    // You can add more Gurobi parameters here if needed
+    // std::cout << "Model setup!" << std::endl;
 }
 
 int Optimizer::get_num_cuts() {

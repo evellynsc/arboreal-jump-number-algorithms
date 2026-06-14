@@ -1,0 +1,64 @@
+\begin{align*}
+% (1) Each vertex is assigned to exactly one time slot
+&\sum_{t=0}^{\text{num\_jumps}} x_{i,t} = 1 && \forall i \in V \tag{1} \\
+
+% (2) Each time slot has at least one vertex assigned
+&\sum_{i \in V} x_{i,t} \geq 1 && \forall t \in \{0, \ldots, \text{num\_jumps}\} \\
+
+% (3) Linking x and a variables for each edge and time
+&x_{i,t} - a_{i,j,t} \geq 0 && \forall (i,j) \in E',\ \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{2} \\
+&x_{j,t} - a_{i,j,t} \geq 0 && \forall (i,j) \in E',\ \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{3} \\
+&a_{i,j,t} - x_{i,t} - x_{j,t} \geq -1 && \forall (i,j) \in E',\ \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{4} \\
+
+% (4) For edges in R^-, prevents certain simultaneous assignments
+&\sum_{u = t+1}^{\text{num\_jumps}-1} x_{i,u} + x_{j,t} \leq 1 && \forall (i,j) \in R^-,\ \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{5} \\
+
+% (5) Root constraint: root at time 0
+&r_{\text{root},0} = 1 \tag{8} \\
+
+% (6) Each time slot has exactly one r variable active
+&\sum_{i \in V} r_{i,t} = 1 && \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{9} \\
+
+% (7) For edges in R^-, prevents certain simultaneous assignments (again)
+&\sum_{t=u+1}^{\text{num\_jumps}} x_{i,t} + x_{j,u} \leq 1 && \forall (i,j) \in R^-,\ \forall u \in \{0, \ldots, \text{num\_jumps}\} \\
+
+% (8) x dominates r
+&x_{i,t} \geq r_{i,t} && \forall i \in V,\ \forall t \in \{0, \ldots, \text{num\_jumps}\} \tag{6} \\
+
+% (9) Each non-root vertex must have exactly one incoming arc or be an r
+&\sum_{t} r_{j,t} + \sum_{i \in \phi^-(j)} \sum_{t} a_{i,j,t} = 1 && \forall j \in V \setminus \{\text{root}\} \tag{7} \\
+
+% (10) Each non-root vertex can have at most one incoming arc
+&\sum_{t} \sum_{i \in \phi^-(j)} a_{i,j,t} \leq 1 && \forall j \in V \setminus \{\text{root}\} \\
+
+% (11) Each time slot after 0 has exactly one f variable active
+&\sum_{i \in V} f_{i,t} = 1 && \forall t > 0,\ t \in \{0, \ldots, \text{num\_jumps}\} \tag{12} \\
+
+% (12) f_{i,u} can only be active if x_{i,t} was active for some t < u
+&f_{i,u} \leq \sum_{t=0}^{u-1} x_{i,t} && \forall u > 0,\ u \in \{0, \ldots, \text{num\_jumps}\},\ \forall i \in V \tag{13} \\
+
+% (13) f, r, and d_{ij} relationship
+&f_{i,t} + r_{j,t} + d_{ij} \leq 2 && \forall i,j \in V,\ \forall t \in \{1, \ldots, \text{num\_jumps}\} \tag{14} \\
+
+% (14) h_{ijtu} upper bounds
+&h_{ijtu} \leq f_{j,u} && \forall i,j \in V,\ \forall t < u \\
+&h_{ijtu} \leq x_{j,t} && \forall i,j \in V,\ \forall t < u \\
+&h_{ijtu} \leq g_{i,t} && \forall i,j \in V,\ \forall t < u \\
+
+% (15) h_{ijtu} lower bound
+&h_{ijtu} \geq f_{j,u} + x_{j,t} + g_{i,t} - 2 && \forall i,j \in V,\ \forall t < u \\
+
+% (16) g_{i,u} definition
+&g_{i,u} = f_{i,u} + \sum_{j \in V} \sum_{t=0}^{u-1} h_{ijtu} && \forall i \in V,\ \forall u \in \{1, \ldots, \text{num\_jumps}\} \tag{20} \\
+
+% (17) w_{i,t,u} upper and lower bounds
+&w_{i,t,u} \leq x_{i,t} && \forall i \in V,\ \forall t \neq u \\
+&w_{i,t,u} \leq g_{i,u} && \forall i \in V,\ \forall t \neq u \\
+&w_{i,t,u} \geq x_{i,t} + g_{i,u} - 1 && \forall i \in V,\ \forall t \neq u \\
+
+% (18) x and w relationship for edges in R^-
+&x_{i,t} + x_{j,u} \leq 1 + \sum_{k \in \sigma^-[i]} w_{k,t,u} && \forall (i,j) \in R^-,\ \forall t \neq u \\
+
+% (19) g_{i,0} = 0 for all i
+&g_{i,0} = 0 && \forall i \in V \\
+\end{align*}

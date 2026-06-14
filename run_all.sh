@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Caminho para o diretório de configuração
-INPUT_DIR=config/feasibility
+INPUT_DIR=config/multiflow
 
 # Caminho para o executável do programa
-PROGRAM_PATH=./build/ajns
+PROGRAM_PATH=./build/grb_ajns
 
 # Verifica se o diretório de configuração existe
 if [ ! -d "$INPUT_DIR" ]; then

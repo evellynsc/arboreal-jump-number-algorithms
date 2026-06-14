@@ -26,11 +26,15 @@ class Exponential : public Optimizer {
     void add_out_edges_constraints();
     void fix_arcs_value();
     void add_bidirected_constraints();
+    bool with_cutset_constraints;
     //TODO: implementar usercut para adicionar cortes e fazer o branch-cut
 
-   public:
+   protected:
+    void add_callbacks() override;
+
+    public:
     Exponential(ajns::Instance&);
-    Exponential(ajns::Instance&, bool);
+    Exponential(ajns::Instance&, bool, bool, SolverParameters&);
     std::vector<GRBVar> get_variables_x();
     std::vector<GRBVar> get_variables(int);
     virtual ~Exponential() override = default;

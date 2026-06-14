@@ -39,7 +39,7 @@ class flow {
 
 
 public:
-	flow(my_graph::digraph);
+	flow(my_graph::digraph&);
 	void run(my_graph::vertex, my_graph::vertex, algo_flow algo);
 	double get_max_flow_value();
 

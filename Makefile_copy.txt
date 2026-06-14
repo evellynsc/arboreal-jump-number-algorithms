@@ -1,0 +1,81 @@
+# Makefile for grb_ajns - This replaces the Meson build system.
+
+# --- Compiler and Flags ---
+# You might need to change 'g++' to your C++ compiler, e.g., 'cl' for MSVC.
+CXX := g++
+# Flags are based on your meson.build file (c++17, optimization=0, debug=true)
+CXXFLAGS := -std=c++17 -O0 -g -Wall
+
+# --- Directories ---
+# WARNING: You MUST change these paths to match your Windows environment.
+# Example: GUROBI_HOME := C:/gurobi1002/win64
+GUROBI_HOME := /mnt/a/Users/evellynsc/Documents/gurobi1203/linux64
+BOOST_HOME := /mnt/a/Users/evellynsc/Documents/boost_1_83_0
+
+# Include and Library paths
+INC_DIRS := -I. -I"$(GUROBI_HOME)/include" -I"$(BOOST_HOME)"
+LIB_DIRS := -L"$(GUROBI_HOME)/lib"
+
+# --- Linker Flags ---
+# Add rpath to embed the runtime library path for Gurobi into the executable
+LDFLAGS := -Wl,-rpath,"$(GUROBI_HOME)/lib"
+
+# --- Libraries ---
+# These are the libraries to link against.
+LIBS := -lgurobi_c++ -lgurobi120
+
+# --- Project Files ---
+TARGET := teste.exe
+
+# List of C++ source files from meson.build
+SRCS := \
+    utils/time.cpp \
+    base/instance.cpp \
+    output/solution.cpp \
+    heuristic/minimal_extension.cpp \
+    optimizer/characterization.cpp \
+    optimizer/feasibility_characterization.cpp \
+    optimizer/exponential.cpp \
+    optimizer/branch_and_cut.cpp \
+    optimizer/optimizer.cpp \
+    optimizer/heuristic_optimizer.cpp \
+    optimizer/multiflow.cpp \
+    optimizer/iterative.cpp \
+    optimizer/optimizer_creator.cpp \
+    preprocessing/instance_generator.cpp \
+    preprocessing/reader.cpp \
+    optimizer/callback/add_min_cuts.cpp \
+    algorithms/flow.cpp \
+    main.cpp
+
+# Generate object file names from source files (e.g., main.cpp -> main.o)
+OBJS := $(SRCS:.cpp=.o)
+
+# --- Build Rules ---
+
+# Default target: builds the executable.
+all: $(TARGET)
+
+# Rule to link the final executable.
+$(TARGET): $(OBJS)
+	@echo "--- Linking executable: $(TARGET) ---"
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LIB_DIRS) $(LDFLAGS) $(LIBS)
+
+# Rule to compile a .cpp source file into a .o object file.
+%.o: %.cpp
+	@echo "--- Compiling: $< ---"
+	$(CXX) $(CXXFLAGS) $(INC_DIRS) -c $< -o $@
+
+# --- Housekeeping ---
+
+# Rule to clean up build artifacts.
+clean:
+	@echo "--- Cleaning up build files ---"
+	-rm -f $(OBJS) $(TARGET)
+
+# Declare 'all' and 'clean' as phony targets.
+.PHONY: all clean
+
+
+#/home/evellyn/gurobi1203
+# /home/evellyn/boost_1_89_0

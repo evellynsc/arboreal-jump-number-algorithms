@@ -14,9 +14,10 @@
 #include "output/metrics.h"
 #include "gurobi_c++.h"
 
-namespace optimizer {
+namespace optimizer
+{
 
-struct SolverParameters {
+  struct SolverParameters {
     double time_limit;
     double memory_tree;
     int num_threads;
@@ -24,44 +25,49 @@ struct SolverParameters {
     int verbosity;
 
     SolverParameters()
-        : time_limit(3600),
-          memory_tree(10000),
-          num_threads(4),
-          add_initial_solution(false),
-          verbosity(0) {}
+      : time_limit(3600),
+      memory_tree(10000),
+      num_threads(4),
+      add_initial_solution(false),
+      verbosity(0) {
+    }
 
     SolverParameters(double _time_limit, double _memory_tree, int _num_threads,
-                     bool _add_initial_solution, int _verbosity)
-        : time_limit(_time_limit),
-          memory_tree(_memory_tree),
-          num_threads(_num_threads),
-          add_initial_solution(_add_initial_solution),
-          verbosity(_verbosity) {}
+      bool _add_initial_solution, int _verbosity)
+      : time_limit(_time_limit),
+      memory_tree(_memory_tree),
+      num_threads(_num_threads),
+      add_initial_solution(_add_initial_solution),
+      verbosity(_verbosity) {
+    }
 
     SolverParameters(double _time_limit, double _memory_tree, int _num_threads)
-        : time_limit(_time_limit),
-          memory_tree(_memory_tree),
-          num_threads(_num_threads),
-          add_initial_solution(false),
-          verbosity(0)  {}
+      : time_limit(_time_limit),
+      memory_tree(_memory_tree),
+      num_threads(_num_threads),
+      add_initial_solution(false),
+      verbosity(0) {
+    }
 
     SolverParameters(double _time_limit, double _memory_tree, int _num_threads, int _verbosity)
-        : time_limit(_time_limit),
-          memory_tree(_memory_tree),
-          num_threads(_num_threads),
-          add_initial_solution(false),
-          verbosity(_verbosity)  {}
+      : time_limit(_time_limit),
+      memory_tree(_memory_tree),
+      num_threads(_num_threads),
+      add_initial_solution(false),
+      verbosity(_verbosity) {
+    }
 
     SolverParameters(double _time_limit, double _memory_tree)
-        : time_limit(_time_limit),
-          memory_tree(_memory_tree),
-          num_threads(4),
-          add_initial_solution(false),
-          verbosity(0)  {}
-};
+      : time_limit(_time_limit),
+      memory_tree(_memory_tree),
+      num_threads(4),
+      add_initial_solution(false),
+      verbosity(0) {
+    }
+  };
 
-class Optimizer {
-   protected:
+  class Optimizer {
+  protected:
     bool relaxed;
     bool solved;
     AlgorithmType type;
@@ -70,14 +76,17 @@ class Optimizer {
     ajns::Instance instance;
     Solution* solution;
     SolverParameters parameters;
-    Metrics *metrics;
+    Metrics* metrics;
 
     virtual void add_variables() = 0;
     virtual void add_objective_function() = 0;
     virtual void add_constraints() = 0;
     virtual void extract_solution() = 0;
     virtual void build_model();
-   public:
+    virtual void add_callbacks();
+    virtual void setup();
+
+  public:
     Optimizer();
     Optimizer(ajns::Instance&, AlgorithmType, bool);
     Optimizer(ajns::Instance&, AlgorithmType, bool, SolverParameters&);
@@ -93,10 +102,9 @@ class Optimizer {
     void set_info(std::string, AlgorithmType);
     void save_metrics(std::string);
 
-   private:
-    void setup();
+  private:
     void save_model(std::string);
-};
+  };
 }  // namespace optimizer
 
 #endif /* OPTIMIZER_OPTIMIZER_H_ */

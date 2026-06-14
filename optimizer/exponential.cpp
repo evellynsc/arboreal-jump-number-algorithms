@@ -9,14 +9,18 @@
 
 #include "base/instance.h"
 #include "utils/const.h"
+#include "callback/add_min_cuts.h"
+
 
 namespace optimizer {
 
 Exponential::Exponential(ajns::Instance& _instance)
     : Optimizer(_instance, EXPONENTIAL, false) {}
 
-Exponential::Exponential(ajns::Instance& _instance, bool _relaxed)
-    : Optimizer(_instance, EXPONENTIAL, _relaxed) {}
+Exponential::Exponential(ajns::Instance& _instance, bool _relaxed, bool _with_cutset_constraints, SolverParameters& _parameters)
+    : Optimizer(_instance, EXPONENTIAL, _relaxed, _parameters) {
+        this->with_cutset_constraints = _with_cutset_constraints;
+    }
 
 void Exponential::add_variables() {
     x.resize(this->instance.num_edges);
@@ -30,7 +34,7 @@ void Exponential::add_variables() {
 void Exponential::add_constraints() {
     add_number_of_edges_constraints();
     add_limit_indegree_constraints();
-    if (!this->relaxed) {
+    if (this->with_cutset_constraints) {
         add_cutset_constraints();
     }
     // add_out_edges_constraints();
@@ -142,6 +146,14 @@ std::vector<GRBVar> Exponential::get_variables_x() { return this->x; }
 std::vector<GRBVar> Exponential::get_variables(int which) { return this->x; }
 
 void Exponential::extract_solution() {}
+
+void Exponential::add_callbacks() {
+    // std::cout << "Adding callbacks..." << std::endl;
+    // GRBVar* x_array = this->x.data();
+    // AddMinCutsCallback* min_cuts_cb = new AddMinCutsCallback(this->instance, this->x);
+    // this->gurobi_model->setCallback(min_cuts_cb);
+    // std::cout << "Callbacks added!" << std::endl;
+}
 
 void Exponential::run() {
     Optimizer::run();

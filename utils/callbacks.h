@@ -13,8 +13,6 @@
 #include <vector>
 #include <map>
 #include "../base/graph.h"
-#include <ilcplex/ilocplex.h>
-ILOSTLBEGIN
 
 namespace solver {
 	namespace callback {
@@ -25,8 +23,8 @@ namespace solver {
 				const my_graph::digraph &imutable_graph);
 		inline void reset_edges_of_vertice(my_graph::vertex v, my_graph::digraph &graph,
 				const my_graph::digraph &imutable_graph);
-		inline void construct_lhside_of_inequality(const my_graph::digraph &graph, std::list<my_graph::edge> &cut,
-				IloBoolVarArray &x, IloExpr &lhside_ineq);
+		// inline void construct_lhside_of_inequality(const my_graph::digraph &graph, std::list<my_graph::edge> &cut,
+		// 		IloBoolVarArray &x, IloExpr &lhside_ineq);
 		inline void add_universal_sink(my_graph::digraph &graph, my_graph::vertex &sink);
 		inline std::set<my_graph::vertex> get_neighboors_of(my_graph::vertex v, const my_graph::digraph &graph);
 		inline my_graph::digraph construct_candidate_graph_from_x_assigment(const my_graph::digraph &graph,
@@ -68,13 +66,13 @@ namespace solver {
 		return vertices;
 	}
 
-	inline void callback::construct_lhside_of_inequality(const my_graph::digraph &graph,
-			std::list<my_graph::edge> &cut, IloBoolVarArray &x, IloExpr &lhside_ineq) {
-		for (const auto& e : cut) {
-			auto idx = graph[e].id;
-			lhside_ineq += x[idx];
-		}
-	}
+	// inline void callback::construct_lhside_of_inequality(const my_graph::digraph &graph,
+	// 		std::list<my_graph::edge> &cut, IloBoolVarArray &x, IloExpr &lhside_ineq) {
+	// 	for (const auto& e : cut) {
+	// 		auto idx = graph[e].id;
+	// 		lhside_ineq += x[idx];
+	// 	}
+	// }
 
 	inline void callback::add_universal_sink(my_graph::digraph &graph, my_graph::vertex &sink) {
 		auto graph_copy = my_graph::digraph();

@@ -1,9 +1,9 @@
-project('grb_ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release', 'optimization=3'])
+project('grb_ajns', 'cpp', default_options : ['cpp_std=c++17', 'buildtype=release', 'optimization=0','b_lundebug=true'])
 
 # Defina os diretórios de include
 inc_dirs = include_directories([
   '/mnt/a/Users/evellynsc/Documents/gurobi1203/linux64/include',
-  '/home/evellyn/boost_1_83_0'
+  '/mnt/a/Users/evellynsc/Documents/boost_1_83_0'
 ])
 
 # Adicione os arquivos de origem
@@ -21,12 +21,16 @@ src_files = [
   'optimizer/characterization.cpp',
   'optimizer/feasibility_characterization.cpp',
   'optimizer/exponential.cpp',
+  'optimizer/branch_and_cut.cpp',
   'optimizer/optimizer.cpp',
+  'optimizer/heuristic_optimizer.cpp',
   'optimizer/multiflow.cpp',
   'optimizer/iterative.cpp',
   'optimizer/optimizer_creator.cpp',
   'preprocessing/instance_generator.cpp',
   'preprocessing/reader.cpp',
+  'optimizer/callback/add_min_cuts.cpp',
+  'algorithms/flow.cpp',
   'main.cpp'
 ]
 

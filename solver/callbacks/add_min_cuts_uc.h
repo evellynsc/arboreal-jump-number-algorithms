@@ -5,6 +5,8 @@
  *      Author: evellyn
  */
 
+#pragma once
+
 #ifndef SOLVER_CALLBACKS_ADD_MIN_CUTS_UC_H_
 #define SOLVER_CALLBACKS_ADD_MIN_CUTS_UC_H_
 
@@ -141,4 +143,3 @@ ILOUSERCUTCALLBACK2(add_min_cuts_uc, IloBoolVarArray, x, ajns::Instance&,
 }
 
 #endif /* SOLVER_CALLBACKS_ADD_MIN_CUTS_UC_H_ */
-#pragma once

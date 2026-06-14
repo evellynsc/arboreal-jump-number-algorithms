@@ -30,10 +30,10 @@ using json = nlohmann::json;
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         std::cerr << "[ERRO] Uso: \n\t (1) ./ajns 0 diretório algorithm \n\t"
-                  << "(2) ./ajns 1 arquivo_de_configuração\n"
-                  << "Use 0 se quiser gerar arquivos de configuração e " 
-                  << "1 para resolver uma instância."
-                  << std::endl;
+            << "(2) ./ajns 1 arquivo_de_configuração\n"
+            << "Use 0 se quiser gerar arquivos de configuração e "
+            << "1 para resolver uma instância."
+            << std::endl;
         return 1;
     }
 
@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
     if (action == 0) {
         if (argc < 8) {
             std::cerr << "[ERRO] Uso: ./ajns 0 dir algorithm "
-                      << "time_limit memory_limit num_threads verbosity"
-                      << std::endl;
+                << "time_limit memory_limit num_threads verbosity"
+                << std::endl;
             return 1;
         }
         std::string directory = argv[2];
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     std::ifstream input(argv[2]);
     if (!input.is_open()) {
         std::cerr << "[ERRO] Não foi possível abrir o arquivo " << argv[2]
-                  << std::endl;
+            << std::endl;
         return 1;
     }
 
@@ -69,13 +69,14 @@ int main(int argc, char* argv[]) {
 
     try {
         validate_json(config);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << "[ERRO] " << e.what();
         return 1;
     }
     std::cout << config["algo"]["type"] << std::endl;
     std::cout << ALGO_ID.str_to_enum[config["algo"]["type"]] << std::endl;
-    
+
     AlgorithmType algorithm = ALGO_ID.str_to_enum[config["algo"]["type"]];
     std::cout << "antes " << config["algo"]["options"]["relaxed"] << std::endl;
     bool relaxed = config["algo"]["options"]["relaxed"];
@@ -92,31 +93,31 @@ int main(int argc, char* argv[]) {
     auto problem_data = input_file.read();
     auto generator = ajns::instance_generator();
     auto instance = generator.create_instance(problem_data);
-    // try
+    try
     {
         optimizer::Optimizer* optimizer = optimizer::OptimizerCreator::create(
-        instance, algorithm, relaxed, *solver_parameters);
+            instance, algorithm, relaxed, *solver_parameters);
 
         if (optimizer == nullptr) {
             std::cerr << "[ERRO] Não foi possível instanciar o otimizador "
-                    << ALGO_ID.enum_to_str[algorithm] << std::endl;
+                << ALGO_ID.enum_to_str[algorithm] << std::endl;
             return 1;
         }
         optimizer->run();
         optimizer->set_info(instance.id, algorithm);
         optimizer->save_metrics("results/");
-        
+
     }
-    // catch (GRBException& e)
-    // {
-    //     std::cerr << "Gurobi Error: " << e.getMessage() << std::endl;
-    //     return 1;
-    // }
-    // catch (const std::exception& e)
-    // {
-    //     std::cerr << "[ERRO] " << e.what();
-    //     return 1;
-    // }
+    catch (GRBException& e)
+    {
+        std::cerr << "Gurobi Error: " << e.getMessage() << std::endl;
+        return 1;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[ERRO] " << e.what();
+        return 1;
+    }
 
     return 0;
 }

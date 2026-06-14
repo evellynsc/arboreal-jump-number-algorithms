@@ -6,7 +6,8 @@
 
 #include "optimizer/characterization.h"
 #include "optimizer/feasibility_characterization.h"
-#include "optimizer/exponential.h"
+#include "optimizer/branch_and_cut.h"
+#include "optimizer/heuristic_optimizer.h"
 #include "optimizer/iterative.h"
 #include "optimizer/multiflow.h"
 #include "optimizer/optimizer.h"
@@ -21,7 +22,7 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
     std::cout << _type << std::endl;
     switch (_type) {
         case EXPONENTIAL:
-            optimizer_obj = new Exponential(_instance, _relaxed);
+            optimizer_obj = new BranchAndCut(_instance, _relaxed, false, _parameters);
             break;
         case BRANCH_AND_CUT:
             // optimizer_obj = new (_instance, _relaxed);
@@ -41,6 +42,9 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
         case CHARACTERIZATION:
             // std::cout << "[INFO] Criando formulação da caracterização" << std::endl;
             optimizer_obj = new Characterization(_instance, _relaxed);
+            break;
+        case SMART_HEURISTIC:
+            optimizer_obj = new HeuristicOptimizer(_instance, _parameters);
             break;
         default:
             std::cerr << "[ERRO] Não é possível instanciar o otimizador "

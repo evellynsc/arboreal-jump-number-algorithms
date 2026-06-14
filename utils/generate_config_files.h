@@ -35,7 +35,10 @@ void generate_json(const std::string& directory, const std::string& algorithm, l
 
             auto instance_name = ajns::get_filename_from_path(filename);
 
-            std::string output_filename = "config/" + algorithm + '/' + instance_name + ".json";
+            std::string output_dir = "config/" + algorithm;
+            fs::create_directories(output_dir);
+
+            std::string output_filename = output_dir + "/" + instance_name + ".json";
             std::cout << "[INFO] Salvando arquivo " << output_filename
                   << std::endl;
             std::ofstream output_file(output_filename);

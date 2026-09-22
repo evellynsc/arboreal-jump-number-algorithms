@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Caminho para o diretório de configuração
-INPUT_DIR=config/multiflow
+INPUT_DIR=config/simple_heuristic
 
 # Caminho para o executável do programa
 PROGRAM_PATH=./build/grb_ajns

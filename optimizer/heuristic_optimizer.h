@@ -2,24 +2,27 @@
 #define OPTIMIZER_HEURISTIC_OPTIMIZER_H_
 
 #include "optimizer.h"
-#include "heuristic/minimal_extension.h"
+#include "heuristic/heuristic.h"
+#include "heuristic/smart_minimal_extension.h"
+#include "heuristic/simple_minimal_extension.h"
 
-namespace optimizer {
+namespace optimizer
+{
 
-class HeuristicOptimizer : public Optimizer {
-public:
-    HeuristicOptimizer(ajns::Instance& instance, SolverParameters& parameters);
-    virtual ~HeuristicOptimizer() = default;
+    class HeuristicOptimizer : public Optimizer {
+    public:
+        HeuristicOptimizer(ajns::Instance& instance, SolverParameters& parameters, bool smart = true);
+        virtual ~HeuristicOptimizer() = default;
 
-    void run() override;
+        void run() override;
 
-private:
-    void build_model() override;
-    void add_variables() override;
-    void add_objective_function() override;
-    void add_constraints() override;
-    void extract_solution() override;
-};
+    private:
+        void build_model() override;
+        void add_variables() override;
+        void add_objective_function() override;
+        void add_constraints() override;
+        void extract_solution() override;
+    };
 
 } // namespace optimizer
 

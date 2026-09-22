@@ -13,14 +13,15 @@
 #include "optimizer/optimizer.h"
 #include "utils/const.h"
 
-namespace optimizer {
-Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
-                                    AlgorithmType _type, bool _relaxed,
-                                    SolverParameters& _parameters) {
-    Optimizer* optimizer_obj = nullptr;
-    AlgorithmIds ALGO_ID;
-    std::cout << _type << std::endl;
-    switch (_type) {
+namespace optimizer
+{
+    Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
+        AlgorithmType _type, bool _relaxed,
+        SolverParameters& _parameters) {
+        Optimizer* optimizer_obj = nullptr;
+        AlgorithmIds ALGO_ID;
+        std::cout << _type << std::endl;
+        switch (_type) {
         case EXPONENTIAL:
             optimizer_obj = new BranchAndCut(_instance, _relaxed, false, _parameters);
             break;
@@ -46,10 +47,13 @@ Optimizer* OptimizerCreator::create(ajns::Instance& _instance,
         case SMART_HEURISTIC:
             optimizer_obj = new HeuristicOptimizer(_instance, _parameters);
             break;
+        case SIMPLE_HEURISTIC:
+            optimizer_obj = new HeuristicOptimizer(_instance, _parameters, false);
+            break;
         default:
             std::cerr << "[ERRO] Não é possível instanciar o otimizador "
-                      << ALGO_ID.enum_to_str[_type] << std::endl;
+                << ALGO_ID.enum_to_str[_type] << std::endl;
+        }
+        return optimizer_obj;
     }
-    return optimizer_obj;
-}
 }  // namespace optimizer

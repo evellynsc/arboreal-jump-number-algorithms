@@ -12,15 +12,16 @@ enum AlgorithmType {
     FEASIBILITY,
     CHARACTERIZATION,
     RANDOM_HEURISTIC,
-    SMART_HEURISTIC
+    SMART_HEURISTIC,
+    SIMPLE_HEURISTIC
 };
 
 struct AlgorithmIds {
     AlgorithmIds() = default;
-    AlgorithmIds(const AlgorithmIds &) = default;
-    AlgorithmIds(AlgorithmIds &&) = default;
-    AlgorithmIds &operator=(const AlgorithmIds &) = default;
-    AlgorithmIds &operator=(AlgorithmIds &&) = default;
+    AlgorithmIds(const AlgorithmIds&) = default;
+    AlgorithmIds(AlgorithmIds&&) = default;
+    AlgorithmIds& operator=(const AlgorithmIds&) = default;
+    AlgorithmIds& operator=(AlgorithmIds&&) = default;
 
     std::string CHARACTERIZATION_NAME = "CHARACTERIZATION";
     std::string FEASIBILITY_NAME = "FEASIBILITY";
@@ -30,6 +31,8 @@ struct AlgorithmIds {
     std::string EXPONENTIAL_NAME = "EXPONENTIAL";
     std::string RANDOM_HEURISTIC_NAME = "RANDOM_HEURISTIC";
     std::string SMART_HEURISTIC_NAME = "SMART_HEURISTIC";
+    std::string SIMPLE_HEURISTIC_NAME = "SIMPLE_HEURISTIC";
+
 
     std::map<std::string, AlgorithmType> str_to_enum = {
         {EXPONENTIAL_NAME, EXPONENTIAL},
@@ -39,7 +42,8 @@ struct AlgorithmIds {
         {FEASIBILITY_NAME, FEASIBILITY},
         {CHARACTERIZATION_NAME, CHARACTERIZATION},
         {RANDOM_HEURISTIC_NAME, RANDOM_HEURISTIC},
-        {SMART_HEURISTIC_NAME, SMART_HEURISTIC}};
+        {SMART_HEURISTIC_NAME, SMART_HEURISTIC},
+        {SIMPLE_HEURISTIC_NAME, SIMPLE_HEURISTIC} };
 
     std::map<int, std::string> enum_to_str = {
         {EXPONENTIAL, EXPONENTIAL_NAME},
@@ -49,7 +53,8 @@ struct AlgorithmIds {
         {FEASIBILITY, FEASIBILITY_NAME},
         {CHARACTERIZATION, CHARACTERIZATION_NAME},
         {RANDOM_HEURISTIC, RANDOM_HEURISTIC_NAME},
-        {SMART_HEURISTIC, SMART_HEURISTIC_NAME}};
+        {SMART_HEURISTIC, SMART_HEURISTIC_NAME},
+        {SIMPLE_HEURISTIC, SIMPLE_HEURISTIC_NAME} };
 };
 
 #endif /* UTILS_CONST_H_ */

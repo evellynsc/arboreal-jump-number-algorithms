@@ -32,6 +32,9 @@ SRCS := \
     utils/time.cpp \
     base/instance.cpp \
     output/solution.cpp \
+    heuristic/heuristic.cpp \
+    heuristic/simple_minimal_extension.cpp \
+    heuristic/smart_minimal_extension.cpp \
     heuristic/minimal_extension.cpp \
     optimizer/characterization.cpp \
     optimizer/feasibility_characterization.cpp \

@@ -6,21 +6,27 @@
 namespace optimizer
 {
 
-    HeuristicOptimizer::HeuristicOptimizer(ajns::Instance& instance, SolverParameters& parameters)
-        : Optimizer(instance, SMART_HEURISTIC, false, parameters) {
+    HeuristicOptimizer::HeuristicOptimizer(ajns::Instance& instance, SolverParameters& parameters, bool smart)
+        : Optimizer(instance, smart ? SMART_HEURISTIC : SIMPLE_HEURISTIC, false, parameters) {
     }
 
     void HeuristicOptimizer::run() {
         ajns::properties p;
-        ajns::minimal_extension heuristic(this->instance);
+        std::cout << "[INFO] Executando heurística " << this->type << std::endl;
+        ajns::Heuristic* heuristic = nullptr;
+        if (this->type == SMART_HEURISTIC)
+            heuristic = new ajns::SmartMinimalExtension(this->instance);
+        else
+            heuristic = new ajns::SimpleMinimalExtension(this->instance);
         Timestamp* ti = NewTimestamp(), * tf = NewTimestamp();
         Timer* timer = GetTimer();
         timer->Clock(ti);
-        heuristic.run(p);
+        heuristic->run(p);
         timer->Clock(tf);
         this->metrics->solve_time = timer->ElapsedTime(ti, tf);
         this->metrics->num_jumps = p.num_jumps;
         this->solved = true;
+        delete heuristic;
     }
 
     void HeuristicOptimizer::build_model() {

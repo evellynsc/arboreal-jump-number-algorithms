@@ -11,7 +11,7 @@ ninja -C build
 ./ajns 0 dir algorithm time_limit memory_limit num_threads verbosity
 ```
 
-## Run option to create config files
+## Execute algorithm with config file
 ``` 
 ./build/ajns 1 config/teste.json
 ```

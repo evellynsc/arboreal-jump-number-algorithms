@@ -9,8 +9,8 @@ CXXFLAGS := -std=c++17 -O0 -g -Wall
 # --- Directories ---
 # WARNING: You MUST change these paths to match your Windows environment.
 # Example: GUROBI_HOME := C:/gurobi1002/win64
-GUROBI_HOME := /mnt/a/Users/evellynsc/Documents/gurobi1203/linux64
-BOOST_HOME := /mnt/a/Users/evellynsc/Documents/boost_1_83_0
+GUROBI_HOME := /home/evellyn/gurobi1203/linux64
+BOOST_HOME := /home/evellyn/boost_1_83_0
 
 # Include and Library paths
 INC_DIRS := -I. -I"$(GUROBI_HOME)/include" -I"$(BOOST_HOME)"

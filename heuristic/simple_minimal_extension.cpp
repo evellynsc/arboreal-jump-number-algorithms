@@ -47,13 +47,10 @@ namespace ajns
             if (boost::in_degree(v, extension) > 1) {
                 auto in_edges = boost::in_edges(v, extension);
                 auto sources = std::list<my_graph::vertex>();
-                // std::cout << extension[v].label << ":\t";
                 for (auto e : boost::make_iterator_range(in_edges)) {
                     auto source = boost::source(e, extension);
                     sources.push_back(source);
-                    // std::cout << extension[source].label << "\t";
                 }
-                // std::cout << std::endl;
                 open_violations.insert({ v, sources });
                 this->violators.push_back(v);
             }
@@ -85,9 +82,10 @@ namespace ajns
     my_graph::vertex SimpleMinimalExtension::choose_violator() {
         static std::mt19937 generator(std::random_device{}());
         std::uniform_int_distribution<std::size_t> distribution(
-            0, violators.size() - 1);
-        auto selected_node = violators[distribution(generator)];
-        return open_violations.find(selected_node)->first;
+            0, open_violations.size() - 1);
+        auto selected = open_violations.begin();
+        std::advance(selected, distribution(generator));
+        return selected->first;
     }
 
     // Choose ANY predecessor (first one in the list)
@@ -232,13 +230,33 @@ namespace ajns
     }
 
     void SimpleMinimalExtension::run() {
+        auto print_open_violations = [this](const char* phase) {
+            std::cout << "open_violations " << phase << " ("
+                << open_violations.size() << " violators):" << std::endl;
+            for (const auto& [violator, predecessors] : open_violations) {
+                std::cout << "  " << extension[violator].label << ":";
+                for (auto predecessor : predecessors) {
+                    std::cout << " " << extension[predecessor].label;
+                }
+                std::cout << std::endl;
+            }
+            };
+
+        // print_open_violations("initial");
         while (this->open_violations.size() > 0) {
             auto v = choose_violator();
             auto x1 = choose_vertex_x1(v);
             auto x2 = choose_vertex_x2(v, x1);
             auto diff = difference_x1_x2(x1, x2);
 
+            // std::cout << "  Violator: " << extension[v].label << std::endl;
+            // std::cout << "  x1: " << extension[x1].label << std::endl;
+            // std::cout << "  x2: " << extension[x2].label << std::endl;
+            // std::cout << "  Difference: " << diff.size() << std::endl;
+
             auto minimal_elements = get_minimal_elements(diff);
+            // std::cout << "  Minimal elements: ";
+            // std::cout << minimal_elements.size() << std::endl;
 
             if (minimal_elements.empty()) {
                 std::cout << "  Error: No minimal elements found!" << std::endl;
@@ -255,7 +273,9 @@ namespace ajns
             auto candidate =
                 std::map<my_graph::vertex, std::list<my_graph::vertex>>();
             candidate[x2].push_back(z);
+            // print_open_violations("before update_extension");
             update_extension(candidate);
+            // print_open_violations("after update_extension");
         }
 
         // std::cout << "Algorithm completed!" << std::endl;
